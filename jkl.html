@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гра: Риболовля 18.0 (Реалістична механіка)</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; background-color: #87CEEB; user-select: none; }
+        
+        /* Меню Профілів та Локацій */
+        #profile-menu, #main-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(to bottom, #1e3c72, #2a5298); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        button { padding: 15px 30px; margin: 10px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; background-color: #ff9800; color: white; transition: 0.3s; }
+        button:hover { background-color: #e68a00; }
+        button:disabled { background-color: #555 !important; cursor: not-allowed !important; color: #aaa !important; }
+
+        .ui-btn { padding: 8px 15px; font-size: 14px; margin: 5px 0; width: 100%; font-weight: bold; }
+
+        /* ЕКРАН ГРИ ТА РЕАЛІСТИЧНІ ЛОКАЦІЇ */
+        #game-screen { display: none; position: relative; width: 100%; height: 100vh; transition: background 1s ease; cursor: crosshair; }
+        
+        /* Ефекти для води та неба */
+        .water { position: absolute; bottom: 0; width: 100%; height: 50%; z-index: 1; transition: 1s; cursor: crosshair; }
+        .sky { position: absolute; top: 0; width: 100%; height: 50%; z-index: 0; transition: 1s; cursor: default; }
+        
+        /* Стилі локацій */
+        .loc-dnipro .sky { background: linear-gradient(to bottom, #7db9e8, #ffffff); }
+        .loc-dnipro .water { background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%); opacity: 0.9; }
+        
+        .loc-sea .sky { background: linear-gradient(to bottom, #2980b9, #6dd5fa, #ffffff); }
+        .loc-sea .water { background: linear-gradient(to bottom, #2c3e50, #000046, #1cb5e0); }
+        
+        .loc-yama .sky { background: linear-gradient(to bottom, #1e3c72, #2a5298); }
+        .loc-yama .water { background: linear-gradient(to bottom, #233329, #63d471); }
+
+        /* Анімація хвиль */
+        @keyframes waves {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(-10px) translateY(5px); }
+            100% { transform: translateX(0) translateY(0); }
+        }
+        .water-overlay { position: absolute; bottom: 0; width: 110%; height: 50%; background: rgba(255,255,255,0.1); z-index: 2; pointer-events: none; animation: waves 4s infinite ease-in-out; }
+
+        #ui-panel { position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 5; min-width: 170px; cursor: default; }
+        
+        #level-ui-panel { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 5; text-align: center; border: 2px solid #1e3c72; cursor: default; }
+        #level-number { font-size: 28px; font-weight: bold; color: #1e3c72; margin: 5px 0; }
+        #exp-bar-container { width: 150px; height: 10px; background-color: #ddd; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #999; }
+        #exp-fill { height: 100%; width: 0%; background-color: #4CAF50; transition: width 0.3s; }
+        #exp-text { font-size: 12px; color: #555; margin-top: 5px; }
+
+        /* ГОДИННИК */
+        #clock-panel { position: absolute; top: 135px; right: 10px; background: rgba(0, 0, 0, 0.7); color: #fff; padding: 10px; border-radius: 8px; z-index: 5; min-width: 100px; text-align: center; border: 1px solid #aaa; font-family: 'Courier New', monospace; cursor: default; }
+        #clock-time { font-size: 24px; font-weight: bold; color: #FFD700; }
+        #clock-day { font-size: 12px; color: #ccc; }
+
+        /* ЗАТЕМНЕННЯ ЧАСУ */
+        #time-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 8; transition: background 2s ease-in-out; }
+
+        /* СПЕЦЕФЕКТИ ТЕКСТУ РИБ */
+        .fish-gold { color: #FFD700 !important; text-shadow: 1px 1px 2px #000; font-weight: bold; }
+        
+        @keyframes colorShift {
+            0% { color: #00bfff; }
+            50% { color: #ff69b4; }
+            100% { color: #00bfff; }
+        }
+        .fish-mythic { animation: colorShift 2s infinite; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+
+        #message-box { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; text-align: center; width: 80%; z-index: 5; pointer-events: none; }
+
+        /* ВУДКА ТА КОТУШКА */
+        #rod { position: absolute; bottom: -50px; right: 20%; width: 12px; height: 500px; background: linear-gradient(to right, #2b2b2b, #555, #1a1a1a); border-radius: 6px 6px 0 0; transform-origin: bottom center; transform: rotate(-15deg); transition: transform 0.2s ease-out; z-index: 4; pointer-events: none; }
+        #rod::before { content: ''; position: absolute; bottom: 40px; left: -5px; width: 22px; height: 180px; background: linear-gradient(to right, #a0522d, #cd853f, #8b4513); border-radius: 10px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+        
+        #reel-body { position: absolute; bottom: 110px; left: -15px; width: 40px; height: 40px; background: #333; border-radius: 50%; border: 2px solid #555; box-shadow: inset 0 0 5px black; z-index: 1; }
+        #reel-spool { position: absolute; bottom: 115px; left: 5px; width: 25px; height: 30px; background: #DAA520; border-radius: 5px; border: 1px solid #8B4513; z-index: 0; overflow: hidden; }
+        #reel-spool::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, #fff, #fff 2px, #DAA520 2px, #DAA520 4px); opacity: 0.7; }
+        #reel-handle-assembly { position: absolute; bottom: 130px; left: -25px; width: 50px; height: 10px; transform-origin: 40px 5px; z-index: 2; }
+        #reel-handle-bar { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #666; border-radius: 5px; box-shadow: 1px 1px 2px black; }
+        #reel-handle-knob { position: absolute; top: -5px; left: -5px; width: 20px; height: 20px; background: #1a1a1a; border-radius: 50%; border: 2px solid #333; box-shadow: inset 0 0 3px black; }
+
+        #rod-tip { position: absolute; top: 0; left: 6px; width: 10px; height: 10px; border: 2px solid silver; border-radius: 50%; transform: translate(-50%, -100%); }
+        
+        #float { position: absolute; top: 55%; left: 40%; font-size: 30px; display: none; z-index: 3; transform-origin: center bottom; pointer-events: none; }
+        #float::after { content: "🔴"; }
+
+        @keyframes bite { 0% { transform: translateY(0); } 50% { transform: translateY(15px) scaleY(0.8); } 100% { transform: translateY(0); } }
+        .biting { animation: bite 0.2s infinite; }
+
+        #fishing-line-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; display: none; }
+        #fishing-line { stroke: rgba(255, 255, 255, 0.6); stroke-width: 1.5; }
+
+        /* ОНОВЛЕНИЙ ІНТЕРФЕЙС МІНІ-ГРИ (Справа внизу, під годинником) */
+        #mini-game-container { display: none; position: absolute; bottom: 40px; right: 30px; display: flex; gap: 20px; align-items: flex-end; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; z-index: 6; border: 2px solid #555; pointer-events: none; }
+        
+        #tension-bar-container { position: relative; width: 40px; height: 300px; background-color: #222; border: 3px solid #fff; border-radius: 5px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+        #tension-fill { width: 100%; height: 0%; background-color: #4CAF50; transition: height 0.1s, background-color 0.2s; box-shadow: 0 0 10px inset rgba(0,0,0,0.5); }
+        .tension-labels { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 12px; padding: 5px 0; box-sizing: border-box;}
+        
+        #progress-bar-container { width: 20px; height: 300px; background-color: #222; border: 2px solid #fff; border-radius: 5px; position: relative; overflow: hidden; }
+        #catch-progress-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background-color: #00bcd4; transition: height 0.1s; }
+
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0, 0, 0, 0.8); z-index: 20; justify-content: center; align-items: center; cursor: default; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 420px; max-height: 85vh; display: flex; flex-direction: column; }
+        .modal-content h2 { margin-top: 0; text-align: center; color: #1e3c72; }
+        
+        .list-container { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #f9f9f9; }
+        .list-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #ccc; padding: 8px 0; font-size: 16px; align-items: center; }
+        
+        .close-btn { background-color: #f44336; }
+        .close-btn:hover { background-color: #d32f2f; }
+        .select-btn { padding: 5px 10px; font-size: 14px; margin: 0; background-color: #4CAF50; }
+        
+        #current-bait-display { font-size: 16px; color: #d35400; font-weight: bold; margin-bottom: 10px; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+
+        #confirm-photo-box { width: 100%; height: 200px; background-color: white; border: 2px solid #ccc; border-radius: 8px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        #confirm-photo-placeholder { font-size: 100px; }
+        #confirm-fish-text { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        #confirm-buttons { display: flex; justify-content: space-around; gap: 10px; }
+        .confirm-btn { flex-grow: 1; margin: 0; padding: 12px; }
+
+        .encyclopedia-item { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .encyclopedia-img-box { width: 60px; height: 60px; flex-shrink: 0; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 35px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .encyclopedia-img-box img { width: 100%; height: 100%; object-fit: contain; }
+        .encyclopedia-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .fish-header { display: flex; justify-content: space-between; width: 100%; font-weight: bold; margin-bottom: 5px; font-size: 16px; }
+        .fish-details { font-size: 13px; color: #555; line-height: 1.4; }
+
+        .wide-modal { width: 750px !important; max-width: 95vw; }
+        .market-layout { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+        .market-col { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 300px; }
+        .market-section { padding: 15px; background: #e3f2fd; border-radius: 8px; border: 1px solid #90caf9; }
+        .market-section h3 { margin-top: 0; color: #1565c0; font-size: 18px; border-bottom: 1px solid #90caf9; padding-bottom: 5px; margin-bottom: 10px; }
+        .upgrade-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .upgrade-info { display: flex; flex-direction: column; }
+        .upgrade-name { font-weight: bold; font-size: 15px; }
+        .upgrade-desc { font-size: 12px; color: #666; }
+        .buy-btn { background-color: #ff9800; padding: 8px 12px; font-size: 14px; border-radius: 5px; margin: 0; min-width: 80px; text-align: center;}
+        #balance-display { text-align: center; font-size: 22px; font-weight: bold; color: #f57c00; margin-bottom: 15px; background: #fff3e0; padding: 15px; border-radius: 8px; border: 2px dashed #ffb74d; }
+        
+        .bait-qty { font-weight: bold; color: #1e3c72; }
+        .out-of-stock { color: #f44336; }
+        .capacity-warning { color: #d32f2f; font-weight: bold; font-size: 14px; margin-top: 5px; display: none; }
+
+        .slots-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .slot-card { background: rgba(255,255,255,0.95); color: #333; width: 240px; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+        .slot-card h3 { margin-top: 0; color: #1e3c72; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .slot-stats { text-align: left; font-size: 15px; margin-bottom: 15px; line-height: 1.6; }
+        .slot-empty { color: #888; font-style: italic; margin: 30px 0; }
+        .slot-btn-group { display: flex; gap: 10px; }
+        .btn-create { background-color: #4CAF50; width: 100%; margin: 0; }
+        .btn-play { background-color: #2196F3; flex-grow: 1; margin: 0; padding: 10px; }
+        .btn-delete { background-color: #f44336; width: 45px; margin: 0; padding: 10px; }
+        .btn-delete:hover { background-color: #d32f2f; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="profile-menu">
+        <h1>Симулятор Рибалки 18.0</h1>
+        <p style="font-size: 18px;">Оберіть слот збереження:</p>
+        <div id="slots-container" class="slots-container"></div>
+    </div>
+
+    <div id="create-profile-modal" class="modal-overlay" style="z-index: 30;">
+        <div class="modal-content" style="width: 350px;">
+            <h2>Створення профілю</h2>
+            <p style="text-align:center; color:#555;">Оберіть режим гри:</p>
+            <button class="ui-btn" style="background-color: #4CAF50; padding: 15px; font-size: 16px; margin-top: 15px;" onclick="confirmCreateProfile('normal')">
+                🌲 Звичайна Гра<br><span style="font-size:12px; font-weight:normal;">Почніть з нуля. Рівень 1, 0 монет.</span>
+            </button>
+            <button class="ui-btn" style="background-color: #2196F3; padding: 15px; font-size: 16px; margin-top: 10px;" onclick="confirmCreateProfile('experienced')">
+                🎣 Досвідчений<br><span style="font-size:12px; font-weight:normal;">Рівень 20, 20000 монет. Доступ до Ями!</span>
+            </button>
+            <button class="ui-btn" style="background-color: #9C27B0; padding: 15px; font-size: 16px; margin-top: 10px;" onclick="confirmCreateProfile('sandbox')">
+                👑 Пісочниця<br><span style="font-size:12px; font-weight:normal;">Для розваги. Рівень 100, 999999 монет!</span>
+            </button>
+            <button class="ui-btn close-btn" style="margin-top: 20px;" onclick="closeCreateProfileModal()">Скасувати</button>
+        </div>
+    </div>
+
+    <div id="main-menu" style="display: none;">
+        <h1>Вибір Локації</h1>
+        <p>Оберіть куди поїдемо рибалити:</p>
+        <button onclick="startGame('dnipro')">Річка Дніпро</button>
+        <button id="btn-sea" onclick="startGame('sea')">Чорне море</button>
+        <button id="btn-yama" onclick="startGame('yama')">Річка Яма</button>
+        <br>
+        <button style="background-color: #555; margin-top: 30px; font-size: 16px; padding: 10px 20px;" onclick="exitToProfileMenu()">🔄 Змінити профіль</button>
+    </div>
+
+    <div id="game-screen">
+        <div class="sky"></div>
+        <div class="water"></div>
+        <div class="water-overlay"></div>
+        <div id="time-overlay"></div>
+        
+        <div id="ui-panel">
+            <div style="font-size: 18px; color: #d35400; font-weight: bold; text-align: center; margin-bottom: 10px;">🪙 <span id="coins-count">0</span></div>
+            <div id="current-bait-display">Наживка: 🪱 Хробак (<span id="main-bait-qty">30</span>)</div>
+            
+            <button class="ui-btn" style="background-color: #2196F3;" onclick="toggleBaitMenu()">🪝 Наживка</button>
+            <button class="ui-btn" style="background-color: #9C27B0;" onclick="toggleEncyclopedia()">📖 Енциклопедія</button>
+            <button class="ui-btn" style="background-color: #ff9800; font-size: 16px;" onclick="toggleMarket()">🛒 Ринок</button>
+            <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
+            <p style="margin: 5px 0;">🐟 Садок: <span id="fish-count">0</span> шт.</p>
+            <p style="margin: 5px 0 10px 0;">⚖️ Вага: <span id="total-weight">0.00</span> / <span id="max-weight">50</span> кг</p>
+            <button class="ui-btn" style="background-color: #4CAF50;" onclick="toggleInventory()">👀 Садок</button>
+            <button class="ui-btn close-btn" onclick="exitToLocationMenu()">Вийти з Локації (ESC)</button>
+        </div>
+
+        <div id="level-ui-panel">
+            <div style="font-size: 12px; color: #555; font-weight: bold;">ТВІЙ РІВЕНЬ</div>
+            <div id="level-number">1</div>
+            <div id="exp-bar-container"><div id="exp-fill"></div></div>
+            <div id="exp-text">EXP: <span id="exp-current">0</span> / <span id="exp-needed">100</span></div>
+        </div>
+
+        <div id="clock-panel">
+            <div id="clock-time">06:00</div>
+            <div id="clock-day">День 1</div>
+        </div>
+
+        <div id="message-box">ЛКМ - Закинути | ПКМ - Підсікти</div>
+
+        <svg id="fishing-line-layer"><line id="fishing-line" x1="0" y1="0" x2="0" y2="0" /></svg>
+        <div id="rod">
+            <div id="reel-spool"></div>
+            <div id="reel-body"></div>
+            <div id="reel-handle-assembly">
+                <div id="reel-handle-bar"></div>
+                <div id="reel-handle-knob"></div>
+            </div>
+            <div id="rod-tip"></div>
+        </div>
+        <div id="float"></div>
+
+        <div id="mini-game-container">
+            <div id="tension-bar-container" title="Напруга ліски">
+                <div class="tension-labels"><span>MAX</span><span>OK</span></div>
+                <div id="tension-fill"></div>
+            </div>
+            <div id="progress-bar-container" title="Прогрес виважування">
+                <div id="catch-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Ваш улов (Садок)</h2>
+            <div id="inventory-list" class="list-container"></div>
+            <button class="ui-btn close-btn" onclick="toggleInventory()">Закрити (ESC)</button>
+        </div>
+    </div>
+
+    <div id="bait-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Коробка з наживками</h2>
+            <div class="list-container">
+                <div class="list-item"><span>🍞 Хліб <span class="bait-qty" id="menu-qty-bread">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('bread', '🍞 Хліб')">Обрати</button></div>
+                <div class="list-item"><span>🪱 Хробак <span class="bait-qty" id="menu-qty-worm">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('worm', '🪱 Хробак')">Обрати</button></div>
+                <div class="list-item"><span>🐟 Блешня <span class="bait-qty" id="menu-qty-lure">(1 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('lure', '🐟 Блешня')">Обрати</button></div>
+            </div>
+            <button class="ui-btn close-btn" onclick="toggleBaitMenu()">Закрити (ESC)</button>
+        </div>
+    </div>
+
+    <div id="encyclopedia-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="encyclopedia-title">Енциклопедія</h2>
+            <div id="encyclopedia-list" class="list-container"></div>
+            <button class="ui-btn close-btn" onclick="toggleEncyclopedia()">Закрити (ESC)</button>
+        </div>
+    </div>
+
+    <div id="catch-confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>🏆 Ваш Улов!</h2>
+            <div id="confirm-photo-box">
+                <img id="confirm-fish-image" src="" alt="Фото риби" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                <div id="confirm-photo-placeholder">🐟</div>
+            </div>
+            <div id="confirm-fish-text">
+                Ви спіймали: <br><span id="confirm-fish-name" style="color:#d35400;">Назва</span> <br>
+                Вага: <span id="confirm-fish-weight">0.00</span> кг
+                <div id="capacity-warning" class="capacity-warning">⚠️ Немає місця в садку! Відпустіть рибу.</div>
+            </div>
+            <div id="confirm-buttons">
+                <button id="btn-take-fish" class="ui-btn select-btn confirm-btn" onclick="takeFish()">✅ Забрати</button>
+                <button class="ui-btn close-btn confirm-btn" onclick="releaseFish()">❌ Відпустити (ESC)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="market-modal" class="modal-overlay">
+        <div class="modal-content wide-modal">
+            <h2>🛒 Ринок Снастей</h2>
+            <div id="balance-display">Твій баланс: 🪙 <span id="market-coins">0</span></div>
+            <div class="market-layout">
+                <div class="market-col">
+                    <div class="market-section">
+                        <h3>🐟 Рибний Ринок</h3>
+                        <p style="font-size: 14px; color: #555;">Поточна вартість садка: 🪙 <b id="market-keepnet-value">0</b></p>
+                        <button id="btn-sell-all" class="ui-btn select-btn" style="background-color: #4CAF50; padding: 12px; font-size: 16px;" onclick="sellAllFish()">💰 Продати весь улов</button>
+                    </div>
+                    <div class="market-section">
+                        <h3>🎣 Купівля Наживок</h3>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🍞 Хліб (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('bread', 10, 10)">🪙 10</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🪱 Хробаки (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('worm', 10, 15)">🪙 15</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🐟 Блешня (1 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('lure', 1, 30)">🪙 30</button></div>
+                    </div>
+                </div>
+                <div class="market-col">
+                    <div class="market-section" style="height: 100%;">
+                        <h3>🛠 Магазин Покращень</h3>
+                        <div class="upgrade-item">
+                            <div class="upgrade-info"><span class="upgrade-name" id="upg-keepnet-name">Садок на 100 кг</span><span class="upgrade-desc">Дозволяє тримати більше риби</span></div>
+                            <button id="btn-upg-keepnet" class="ui-btn buy-btn" onclick="buyUpgrade('keepnet')">🪙 500</button>
+                        </div>
+                        <div class="upgrade-item">
+                            <div class="upgrade-info"><span class="upgrade-name">Карбонова Вудка</span><span class="upgrade-desc">Міцніша ліска, витримує +15% напруги</span></div>
+                            <button id="btn-upg-rod" class="ui-btn buy-btn" onclick="buyUpgrade('rod', 500)">🪙 500</button>
+                        </div>
+                        <div class="upgrade-item">
+                            <div class="upgrade-info"><span class="upgrade-name">Професійна Котушка</span><span class="upgrade-desc">Швидше намотує ліску на 20%</span></div>
+                            <button id="btn-upg-reel" class="ui-btn buy-btn" onclick="buyUpgrade('reel', 800)">🪙 800</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="ui-btn close-btn" onclick="toggleMarket()">Закрити (ESC)</button>
+        </div>
+    </div>
+
+    <script>
+        const fishDatabase = {
+            dnipro: [
+                { name: "Плітка", minWeight: 0.05, maxWeight: 0.5, difficulty: 0.5, baits: ['bread', 'worm'] },
+                { name: "Краснопірка", minWeight: 0.1, maxWeight: 0.4, difficulty: 0.8, baits: ['bread'] },
+                { name: "Йорж", minWeight: 0.05, maxWeight: 0.15, difficulty: 0.5, baits: ['worm'] },
+                { name: "Карась", minWeight: 0.1, maxWeight: 1.5, difficulty: 1, baits: ['bread', 'worm'] },
+                { name: "Лящ", minWeight: 0.5, maxWeight: 3.0, difficulty: 1.5, baits: ['bread', 'worm'] },
+                { name: "Окунь", minWeight: 0.1, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'lure'] },
+                { name: "Линок", minWeight: 0.5, maxWeight: 2.5, difficulty: 1.5, baits: ['worm'] },
+                { name: "Голавль", minWeight: 0.5, maxWeight: 2.5, difficulty: 2, baits: ['worm', 'lure'] },
+                { name: "Щука", minWeight: 1.0, maxWeight: 8.0, difficulty: 2.5, baits: ['lure'] },
+                { name: "Судак", minWeight: 0.8, maxWeight: 6.0, difficulty: 3.0, baits: ['lure'] },
+                { name: "Стерлядь", minWeight: 0.5, maxWeight: 16.0, difficulty: 4.5, baits: ['worm', 'lure'] },
+                { name: "Короп (Трофей)", minWeight: 1.0, maxWeight: 50.0, difficulty: 3.5, baits: ['bread', 'worm'] },
+                { name: "Сом (Трофей)", minWeight: 15.0, maxWeight: 250.0, difficulty: 5.5, baits: ['worm', 'lure'] }
+            ],
+            sea: [
+                { name: "Бичок", minWeight: 0.05, maxWeight: 0.3, difficulty: 0.5, baits: ['worm'] },
+                { name: "Зеленушка", minWeight: 0.05, maxWeight: 0.2, difficulty: 0.5, baits: ['worm'] },
+                { name: "Барабуля", minWeight: 0.1, maxWeight: 0.3, difficulty: 1.0, baits: ['worm'] },
+                { name: "Ставрида", minWeight: 0.1, maxWeight: 0.6, difficulty: 1.5, baits: ['worm', 'lure'] },
+                { name: "Скорпена", minWeight: 0.2, maxWeight: 1.0, difficulty: 1.5, baits: ['worm', 'lure'] },
+                { name: "Кефаль", minWeight: 0.5, maxWeight: 2.5, difficulty: 2.0, baits: ['bread'] },
+                { name: "Сарган", minWeight: 0.2, maxWeight: 0.8, difficulty: 2.0, baits: ['lure'] },
+                { name: "Пеленгас", minWeight: 1.0, maxWeight: 5.0, difficulty: 2.5, baits: ['bread', 'worm'] },
+                { name: "Камбала", minWeight: 1.0, maxWeight: 4.0, difficulty: 2.5, baits: ['worm', 'lure'] },
+                { name: "Горбиль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.5, baits: ['worm', 'lure'] },
+                { name: "Катран (Акула)", minWeight: 2.0, maxWeight: 15.0, difficulty: 4.0, baits: ['lure'] },
+                { name: "Білуга (Унікальний)", minWeight: 50.0, maxWeight: 500.0, difficulty: 6.0, baits: ['lure', 'worm'] }
+            ],
+            yama: [
+                { name: "Харіус", minWeight: 0.2, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'lure'] },
+                { name: "Сиг", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm'] },
+                { name: "Ленок", minWeight: 1.0, maxWeight: 6.0, difficulty: 2.5, baits: ['worm', 'lure'] },
+                { name: "Кунджа", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.5, baits: ['lure'] },
+                { name: "Мальма", minWeight: 0.5, maxWeight: 3.5, difficulty: 2.5, baits: ['worm', 'lure'] },
+                { name: "Голець", minWeight: 1.0, maxWeight: 8.0, difficulty: 3.0, baits: ['lure'] },
+                { name: "Кета", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['lure'] },
+                { name: "Минь", minWeight: 2.0, maxWeight: 15.0, difficulty: 3.5, baits: ['worm', 'lure'] },
+                { name: "Кижуч", minWeight: 3.0, maxWeight: 12.0, difficulty: 4.0, baits: ['lure'] },
+                { name: "Нерка", minWeight: 2.0, maxWeight: 7.0, difficulty: 4.0, baits: ['lure'] },
+                { name: "Чавича", minWeight: 5.0, maxWeight: 25.0, difficulty: 5.0, baits: ['lure'] },
+                { name: "Таймень (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 6.0, baits: ['lure'] },
+                { name: "Калуга (Унікальний)", minWeight: 50.0, maxWeight: 800.0, difficulty: 6.0, baits: ['lure', 'worm'] }
+            ]
+        };
+
+        const baitIcons = { 'bread': '🍞', 'worm': '🪱', 'lure': '🐟' };
+        const baitNames = { 'bread': '🍞 Хліб', 'worm': '🪱 Хробак', 'lure': '🐟 Блешня' };
+
+        const keepnetData = [
+            { level: 1, capacity: 50, cost: 0 },
+            { level: 2, capacity: 100, cost: 500 },
+            { level: 3, capacity: 150, cost: 700 },
+            { level: 4, capacity: 300, cost: 1000 },
+            { level: 5, capacity: 400, cost: 1300 },
+            { level: 6, capacity: 500, cost: 1500 },
+            { level: 7, capacity: 800, cost: 1700 },
+            { level: 8, capacity: 1200, cost: 2000 }
+        ];
+
+        const STORAGE_KEY = 'fishingGameSave18';
+        let savedProfiles = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [null, null, null];
+        let activeProfileIndex = -1; let creatingSlotIndex = -1;
+
+        let playerLevel = 1; let playerExp = 0; let expNeeded = 100;
+        let coins = 0; let upgradeRodBought = false; let upgradeReelBought = false; let currentKeepnetLevel = 0;
+        let currentBaitId = 'worm'; let baitInventory = { bread: 30, worm: 30, lure: 1 };
+        
+        let gameState = 'idle'; let currentLocation = ''; let caughtFishArray = []; let totalWeight = 0;
+        let biteTimeout; let activeFish = null; let tempFishData = null;
+        
+        // ЗМІННІ ДЛЯ МИШІ ТА НОВОЇ МЕХАНІКИ
+        let isLMB = false; let isRMB = false;
+        let catchProgress = 20; let lineTension = 0;
+        let gameLoopInterval; let reelRotation = 0;
+        
+        // СИСТЕМА ЧАСУ
+        let gameMinute = 360; // Починаємо о 06:00
+        let gameDay = 1; let clockInterval;
+
+        const profileMenu = document.getElementById('profile-menu'); const slotsContainer = document.getElementById('slots-container');
+        const createModal = document.getElementById('create-profile-modal');
+        const mainMenu = document.getElementById('main-menu'); const gameScreen = document.getElementById('game-screen');
+        const msgBox = document.getElementById('message-box'); const floatObj = document.getElementById('float');
+        const rodObj = document.getElementById('rod'); const rodTip = document.getElementById('rod-tip');
+        const reelHandle = document.getElementById('reel-handle-assembly');
+        const svgLayer = document.getElementById('fishing-line-layer'); const lineObj = document.getElementById('fishing-line');
+        const miniGameUI = document.getElementById('mini-game-container'); 
+        const tensionFillUI = document.getElementById('tension-fill'); const progressFillUI = document.getElementById('catch-progress-fill');
+        
+        const inventoryModal = document.getElementById('inventory-modal'); const inventoryList = document.getElementById('inventory-list');
+        const baitModal = document.getElementById('bait-modal'); const baitDisplay = document.getElementById('current-bait-display');
+        const encyclopediaModal = document.getElementById('encyclopedia-modal'); const encyclopediaList = document.getElementById('encyclopedia-list'); const encyclopediaTitle = document.getElementById('encyclopedia-title');
+        const confirmModal = document.getElementById('catch-confirm-modal'); const photoBoxUI = document.getElementById('confirm-photo-box');
+        const marketModal = document.getElementById('market-modal'); const coinsCountUI = document.getElementById('coins-count'); const marketCoinsUI = document.getElementById('market-coins'); const marketKeepnetValUI = document.getElementById('market-keepnet-value');
+
+        window.onload = function() { renderSlots(); };
+
+        function updateGameTime() {
+            gameMinute++;
+            if (gameMinute >= 1440) { gameMinute = 0; gameDay++; }
+            const hours = Math.floor(gameMinute / 60); const mins = gameMinute % 60;
+            document.getElementById('clock-time').innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            document.getElementById('clock-day').innerText = `День ${gameDay}`;
+            updateLighting(hours);
+        }
+
+        function updateLighting(hours) {
+            const overlay = document.getElementById('time-overlay');
+            if (hours >= 21 || hours < 5) overlay.style.background = 'rgba(0, 0, 50, 0.5)'; // Ніч
+            else if (hours >= 5 && hours < 7) overlay.style.background = 'rgba(255, 100, 0, 0.2)'; // Світанок
+            else if (hours >= 19 && hours < 21) overlay.style.background = 'rgba(200, 50, 0, 0.3)'; // Захід
+            else overlay.style.background = 'rgba(0, 0, 0, 0)'; // День
+        }
+
+        function getFishClass(weight) {
+            if (weight >= 300) return 'fish-mythic';
+            if (weight >= 50) return 'fish-gold';
+            return '';
+        }
+
+        function renderSlots() {
+            slotsContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                let profile = savedProfiles[i];
+                if (profile) {
+                    slotsContainer.innerHTML += `<div class="slot-card"><h3>Слот ${i + 1} (${profile.mode})</h3><div class="slot-stats">⭐ Рівень: ${profile.level}<br>🪙 Монети: ${profile.coins}<br>🐟 В садку: ${profile.fish.length} шт.</div><div class="slot-btn-group"><button class="ui-btn btn-play" onclick="playProfile(${i})">▶ Грати</button><button class="ui-btn btn-delete" onclick="deleteProfile(${i})" title="Видалити">🗑️</button></div></div>`;
+                } else {
+                    slotsContainer.innerHTML += `<div class="slot-card" style="justify-content: center;"><h3 style="color:#aaa; border-color:#aaa;">Слот ${i + 1}</h3><div class="slot-empty">Вільний слот</div><button class="ui-btn btn-create" onclick="openCreateModal(${i})">➕ Створити</button></div>`;
+                }
+            }
+        }
+
+        function openCreateModal(index) { creatingSlotIndex = index; createModal.style.display = 'flex'; }
+        function closeCreateProfileModal() { createModal.style.display = 'none'; }
+
+        function confirmCreateProfile(mode) {
+            let newProfile = {};
+            if (mode === 'sandbox') newProfile = { mode: 'Пісочниця', level: 100, exp: 0, coins: 9999999, rodBought: false, reelBought: false, keepnetLevel: 0, inventory: { bread: 999, worm: 999, lure: 999 }, fish: [], weight: 0 };
+            else if (mode === 'experienced') newProfile = { mode: 'Досвідчений', level: 20, exp: 0, coins: 20000, rodBought: false, reelBought: false, keepnetLevel: 0, inventory: { bread: 100, worm: 100, lure: 10 }, fish: [], weight: 0 };
+            else newProfile = { mode: 'Звичайна', level: 1, exp: 0, coins: 0, rodBought: false, reelBought: false, keepnetLevel: 0, inventory: { bread: 30, worm: 30, lure: 1 }, fish: [], weight: 0 };
+            
+            savedProfiles[creatingSlotIndex] = newProfile; localStorage.setItem(STORAGE_KEY, JSON.stringify(savedProfiles)); closeCreateProfileModal(); renderSlots();
+        }
+
+        function deleteProfile(index) { if (confirm("Ви впевнені, що хочете видалити цей профіль?")) { savedProfiles[index] = null; localStorage.setItem(STORAGE_KEY, JSON.stringify(savedProfiles)); renderSlots(); } }
+
+        function playProfile(index) {
+            activeProfileIndex = index; let data = savedProfiles[index];
+            playerLevel = data.level; playerExp = data.exp; expNeeded = calculateExpNeeded(playerLevel);
+            coins = data.coins; upgradeRodBought = data.rodBought; upgradeReelBought = data.reelBought; currentKeepnetLevel = data.keepnetLevel; baitInventory = data.inventory; caughtFishArray = data.fish; totalWeight = data.weight;
+            if(baitInventory.lure === undefined) baitInventory.lure = 1;
+            updateLevelUI(); profileMenu.style.display = 'none'; showLocationMenu();
+        }
+
+        function saveProgress() {
+            if (activeProfileIndex === -1) return;
+            savedProfiles[activeProfileIndex] = { mode: savedProfiles[activeProfileIndex].mode, level: playerLevel, exp: playerExp, coins: coins, rodBought: upgradeRodBought, reelBought: upgradeReelBought, keepnetLevel: currentKeepnetLevel, inventory: baitInventory, fish: caughtFishArray, weight: totalWeight };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedProfiles));
+        }
+
+        function exitToProfileMenu() { saveProgress(); activeProfileIndex = -1; mainMenu.style.display = 'none'; renderSlots(); profileMenu.style.display = 'flex'; clearInterval(clockInterval); }
+
+        function showLocationMenu() {
+            gameScreen.style.display = 'none'; mainMenu.style.display = 'flex';
+            let seaBtn = document.getElementById('btn-sea');
+            if (playerLevel < 10) { seaBtn.disabled = true; seaBtn.innerHTML = "🔒 Чорне море (з 10 рівня)"; } else { seaBtn.disabled = false; seaBtn.innerHTML = "Чорне море"; }
+
+            let yamaBtn = document.getElementById('btn-yama');
+            if (playerLevel < 20) { yamaBtn.disabled = true; yamaBtn.innerHTML = "🔒 Річка Яма (з 20 рівня)"; } else { yamaBtn.disabled = false; yamaBtn.innerHTML = "Річка Яма"; }
+            clearInterval(clockInterval);
+        }
+
+        function calculateExpNeeded(lvl) { return Math.floor(100 * Math.pow(1.3, lvl - 1)); }
+
+        function gainExp(amount) {
+            playerExp += amount;
+            while (playerExp >= expNeeded) {
+                playerExp -= expNeeded; playerLevel++; expNeeded = calculateExpNeeded(playerLevel);
+                if (playerLevel === 10) alert("🎉 ВІТАЄМО! Відкрито локацію: Чорне море!");
+                if (playerLevel === 20) alert("🎉 ВІТАЄМО! Відкрито легендарну локацію: Річка Яма!");
+            }
+            updateLevelUI(); saveProgress();
+        }
+
+        function updateLevelUI() { document.getElementById('level-number').innerText = playerLevel; document.getElementById('exp-current').innerText = Math.floor(playerExp); document.getElementById('exp-needed').innerText = expNeeded; let fillPercent = (playerExp / expNeeded) * 100; document.getElementById('exp-fill').style.width = fillPercent + '%'; }
+
+        function startGame(location) {
+            currentLocation = location;
+            mainMenu.style.display = 'none';
+            gameScreen.style.display = 'block';
+            gameScreen.className = 'loc-' + location;
+            
+            resetRod();
+            requestAnimationFrame(drawFishingLine);
+            updateCoinsUI(); updateBaitUI(); updateMarketUI(); updateKeepnetUI();
+            
+            clearInterval(clockInterval);
+            clockInterval = setInterval(updateGameTime, 5000);
+            updateLighting(Math.floor(gameMinute / 60));
+        }
+        
+        function exitToLocationMenu() { saveProgress(); clearTimeout(biteTimeout); clearInterval(gameLoopInterval); clearInterval(clockInterval); resetRod(); closeAllModals(); showLocationMenu(); }
+        function closeAllModals() { inventoryModal.style.display = 'none'; baitModal.style.display = 'none'; encyclopediaModal.style.display = 'none'; marketModal.style.display = 'none'; }
+
+        function updateBaitUI() {
+            let qty = baitInventory[currentBaitId]; let color = qty > 0 ? '#d35400' : '#f44336';
+            baitDisplay.innerHTML = `Наживка: ${baitNames[currentBaitId]} <span style="color:${color}">(${qty})</span>`;
+            document.getElementById('menu-qty-bread').innerText = `(${baitInventory.bread} шт)`; document.getElementById('menu-qty-bread').className = baitInventory.bread > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            document.getElementById('menu-qty-worm').innerText = `(${baitInventory.worm} шт)`; document.getElementById('menu-qty-worm').className = baitInventory.worm > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            document.getElementById('menu-qty-lure').innerText = `(${baitInventory.lure} шт)`; document.getElementById('menu-qty-lure').className = baitInventory.lure > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+        }
+        
+        function updateKeepnetUI() { document.getElementById('fish-count').innerText = caughtFishArray.length; document.getElementById('total-weight').innerText = totalWeight.toFixed(2); document.getElementById('max-weight').innerText = keepnetData[currentKeepnetLevel].capacity; }
+
+        function toggleInventory() {
+            if (inventoryModal.style.display === 'flex') { closeAllModals(); return; }
+            closeAllModals();
+            inventoryList.innerHTML = caughtFishArray.length === 0 ? '<p style="text-align:center;">Садок порожній...</p>' : '';
+            caughtFishArray.forEach((fish, index) => {
+                let fClass = getFishClass(fish.weight);
+                inventoryList.innerHTML += `<div class="list-item"><span>${index + 1}. <span class="${fClass}">${fish.name}</span></span><span class="${fClass}">${fish.weight} кг</span></div>`;
+            });
+            inventoryModal.style.display = 'flex';
+        }
+
+        function toggleBaitMenu() { if (gameState !== 'idle') { showMessage("Змінювати наживку можна лише до закидання!"); return; } if (baitModal.style.display === 'flex') { closeAllModals(); return; } closeAllModals(); updateBaitUI(); baitModal.style.display = 'flex'; }
+        
+        function toggleEncyclopedia() {
+            if (encyclopediaModal.style.display === 'flex') { closeAllModals(); return; }
+            closeAllModals();
+            if (currentLocation === 'dnipro') encyclopediaTitle.innerText = "Риби: Річка Дніпро";
+            else if (currentLocation === 'sea') encyclopediaTitle.innerText = "Риби: Чорне море";
+            else if (currentLocation === 'yama') encyclopediaTitle.innerText = "Риби: Річка Яма";
+            
+            encyclopediaList.innerHTML = '';
+            let localFishes = fishDatabase[currentLocation];
+            
+            localFishes.forEach(fish => {
+                let baitsString = fish.baits.map(b => baitIcons[b]).join(' ');
+                let fClass = ""; if (fish.maxWeight >= 300) fClass = "fish-mythic"; else if (fish.maxWeight >= 50) fClass = "fish-gold";
+                let imageContent = fish.image ? `<img src="${fish.image}" alt="${fish.name}">` : `🐟`;
+                
+                encyclopediaList.innerHTML += `<div class="encyclopedia-item">
+                    <div class="encyclopedia-img-box">${imageContent}</div>
+                    <div class="encyclopedia-info">
+                        <div class="fish-header"><span class="${fClass}">${fish.name}</span><span>⭐ ${fish.difficulty}</span></div>
+                        <div class="fish-details">Вага: ${fish.minWeight} - ${fish.maxWeight} кг<br>Наживки: ${baitsString}</div>
+                    </div>
+                </div>`;
+            });
+            encyclopediaModal.style.display = 'flex';
+        }
+        
+        function toggleMarket() { if (gameState !== 'idle') { showMessage("Ви не можете піти на ринок під час риболовлі!"); return; } if (marketModal.style.display === 'flex') { closeAllModals(); return; } closeAllModals(); updateCoinsUI(); updateMarketUI(); marketKeepnetValUI.innerText = calculateKeepnetValue(); document.getElementById('btn-sell-all').disabled = caughtFishArray.length === 0; marketModal.style.display = 'flex'; }
+
+        function calculateKeepnetValue() { let value = 0; caughtFishArray.forEach(fish => { let dbFish = fishDatabase[currentLocation].find(f => f.name === fish.name); let diff = dbFish ? dbFish.difficulty : 1; value += fish.weight * diff * 10; }); return Math.floor(value); }
+        function sellAllFish() { let value = calculateKeepnetValue(); if(value > 0) { coins += value; caughtFishArray = []; totalWeight = 0; updateKeepnetUI(); updateCoinsUI(); toggleMarket(); showMessage(`Улов продано за 🪙 ${value} монет!`); saveProgress(); } }
+
+        function buyBait(type, amount, cost) { if (coins >= cost) { if (type === 'lure' && baitInventory.lure > 0 && savedProfiles[activeProfileIndex].mode !== 'Пісочниця') { alert("У вас вже є блешня!"); return; } coins -= cost; baitInventory[type] += amount; updateCoinsUI(); updateBaitUI(); showMessage(`Ви купили ${baitNames[type]}!`); saveProgress(); } else { alert("Недостатньо монет!"); } }
+        
+        function buyUpgrade(type, cost) {
+            if (type === 'keepnet') {
+                let nextLevel = currentKeepnetLevel + 1; if (nextLevel >= keepnetData.length) return;
+                let actualCost = keepnetData[nextLevel].cost;
+                if (coins >= actualCost) { coins -= actualCost; currentKeepnetLevel++; showMessage(`Ви купили новий садок!`); updateMarketUI(); updateCoinsUI(); updateKeepnetUI(); saveProgress(); } else alert("Недостатньо монет!");
+                return;
+            }
+            if (coins >= cost) {
+                if (type === 'rod' && !upgradeRodBought) { coins -= cost; upgradeRodBought = true; showMessage("Ви купили Карбонову Вудку!"); }
+                else if (type === 'reel' && !upgradeReelBought) { coins -= cost; upgradeReelBought = true; showMessage("Ви купили Професійну Котушку!"); }
+                updateMarketUI(); updateCoinsUI(); saveProgress();
+            } else alert("Недостатньо монет!");
+        }
+
+        function updateMarketUI() {
+            let nextLevel = currentKeepnetLevel + 1; let btnKeepnet = document.getElementById('btn-upg-keepnet'); let nameKeepnet = document.getElementById('upg-keepnet-name');
+            if (nextLevel < keepnetData.length) { nameKeepnet.innerText = `Садок на ${keepnetData[nextLevel].capacity} кг`; btnKeepnet.innerText = `🪙 ${keepnetData[nextLevel].cost}`; btnKeepnet.disabled = false; }
+            else { nameKeepnet.innerText = `Садок (Максимум)`; btnKeepnet.innerText = `✅ Макс`; btnKeepnet.disabled = true; }
+            
+            let btnRod = document.getElementById('btn-upg-rod'); if(upgradeRodBought) { btnRod.innerText = "✅ Куплено"; btnRod.disabled = true; } else { btnRod.innerText = "🪙 500"; btnRod.disabled = false; }
+            let btnReel = document.getElementById('btn-upg-reel'); if(upgradeReelBought) { btnReel.innerText = "✅ Куплено"; btnReel.disabled = true; } else { btnReel.innerText = "🪙 800"; btnReel.disabled = false; }
+        }
+
+        function updateCoinsUI() { coinsCountUI.innerText = coins; marketCoinsUI.innerText = coins; }
+        function setBait(baitId, baitName) { if(baitInventory[baitId] <= 0) { alert(`У вас закінчилась наживка!`); return; } currentBaitId = baitId; updateBaitUI(); toggleBaitMenu(); }
+
+        function takeFish() {
+            let currentCapacity = keepnetData[currentKeepnetLevel].capacity;
+            if (totalWeight + tempFishData.weight > currentCapacity) { alert("Садок переповнений!"); return; }
+            caughtFishArray.push(tempFishData); totalWeight += tempFishData.weight; updateKeepnetUI();
+            let expGained = tempFishData.weight * tempFishData.difficulty * 2; gainExp(expGained);
+            confirmModal.style.display = 'none'; showMessage(`Рибу додано до садка! (+${Math.floor(expGained)} EXP)`); tempFishData = null; endFishingAttempt(); saveProgress();
+        }
+
+        function releaseFish() { confirmModal.style.display = 'none'; showMessage(`Рибу відпущено.`); tempFishData = null; endFishingAttempt(); }
+
+        // ==========================================
+        // КЕРУВАННЯ МИШЕЮ ТА АНІМАЦІЇ ВУДКИ
+        // ==========================================
+
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Escape') {
+                if (confirmModal.style.display === 'flex') releaseFish();
+                else if (document.querySelector('.modal-overlay[style*="display: flex"]')) closeAllModals();
+                else if (gameScreen.style.display === 'block') exitToLocationMenu();
+            }
+        });
+
+        document.addEventListener('mousedown', function(e) {
+            if(gameScreen.style.display !== 'block' || document.querySelector('.modal-overlay[style*="display: flex"]')) return;
+            // Ігноруємо кліки по UI елементах
+            if(e.target.closest('#ui-panel') || e.target.closest('#level-ui-panel') || e.target.closest('#clock-panel')) return;
+
+            if (e.button === 0) { // Ліва кнопка миші (ЛКМ)
+                isLMB = true;
+                if (gameState === 'idle') {
+                    // Перевіряємо, чи клік був по воді (нижня половина екрану)
+                    if(e.clientY > window.innerHeight / 2) {
+                        castRod(e.clientX, e.clientY);
+                    } else {
+                        showMessage("Закидати треба у воду!");
+                    }
+                } else if (gameState === 'waiting') {
+                    showMessage("Ви витягли пустий гачок...");
+                    clearTimeout(biteTimeout);
+                    endFishingAttempt();
+                }
+            } else if (e.button === 2) { // Права кнопка миші (ПКМ)
+                isRMB = true;
+                if (gameState === 'biting') {
+                    startReeling(); // ПІДСІКАННЯ!
+                } else if (gameState === 'waiting') {
+                    showMessage("Зарано! Ви злякали рибу.");
+                    clearTimeout(biteTimeout);
+                    endFishingAttempt();
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            if (e.button === 0) isLMB = false;
+            if (e.button === 2) isRMB = false;
+        });
+
+        document.addEventListener('mouseleave', function() { isLMB = false; isRMB = false; });
+
+        function drawFishingLine() {
+            if (gameState !== 'idle' && gameState !== 'cooldown' && gameState !== 'confirming') {
+                svgLayer.style.display = 'block'; const tipRect = rodTip.getBoundingClientRect(); const floatRect = floatObj.getBoundingClientRect();
+                lineObj.setAttribute('x1', tipRect.left + tipRect.width / 2); lineObj.setAttribute('y1', tipRect.top + tipRect.height / 2); lineObj.setAttribute('x2', floatRect.left + 15); lineObj.setAttribute('y2', floatRect.top + 15);
+            } else { svgLayer.style.display = 'none'; }
+            if (gameScreen.style.display === 'block') requestAnimationFrame(drawFishingLine);
+        }
+
+        function castRod(targetX, targetY) {
+            let currentCapacity = keepnetData[currentKeepnetLevel].capacity;
+            if (totalWeight >= currentCapacity) { showMessage("Ваш садок ПОВНИЙ! Продайте рибу."); return; }
+            if (baitInventory[currentBaitId] <= 0) { showMessage(`У вас немає наживки!`); return; }
+            if (currentBaitId !== 'lure') { baitInventory[currentBaitId]--; updateBaitUI(); saveProgress(); }
+            
+            floatObj.style.left = (targetX - 15) + 'px';
+            floatObj.style.top = (targetY - 15) + 'px';
+            
+            // Нахил вудки в сторону закидання (без перевертання)
+            let rodBaseX = window.innerWidth * 0.8;
+            let castAngle = ((targetX - rodBaseX) / window.innerWidth) * 90;
+            if (castAngle < -85) castAngle = -85; // Обмеження нахилу вліво
+            if (castAngle > 10) castAngle = 10;   // Обмеження нахилу вправо
+            
+            rodObj.style.transform = `rotate(${castAngle}deg)`;
+
+            gameState = 'waiting'; showMessage("Очікування клювання... (ПКМ щоб підсікти)"); setTimeout(() => { floatObj.style.display = 'block'; floatObj.classList.remove('biting'); }, 400); 
+            let waitTime = Math.floor(Math.random() * 4000) + 2000; biteTimeout = setTimeout(fishBiting, waitTime);
+        }
+
+        function fishBiting() { gameState = 'biting'; showMessage("КЛЮЄ! Тисни ПКМ щоб підсікти!"); floatObj.classList.add('biting'); biteTimeout = setTimeout(() => { if (gameState === 'biting') { showMessage("Риба з'їла наживку і втекла..."); endFishingAttempt(); } }, 2000); }
+
+        function startReeling() {
+            clearTimeout(biteTimeout); gameState = 'reeling'; 
+            
+            let availableFish = fishDatabase[currentLocation].filter(fish => fish.baits.includes(currentBaitId));
+            if (availableFish.length === 0) { showMessage("Хтось збив наживку..."); endFishingAttempt(); return; }
+            
+            activeFish = availableFish[Math.floor(Math.random() * availableFish.length)];
+            
+            catchProgress = 20; 
+            lineTension = 15; 
+            
+            showMessage(activeFish.difficulty >= 5 ? `УВАГА! ГІГАНТ НА ГАЧКУ! ВИТЯГУЙ!` : `Є! Зажимай ЛКМ щоб мотати, ПКМ - тягнути!`); 
+            miniGameUI.style.display = 'flex';
+            
+            gameLoopInterval = setInterval(updateMiniGame, 20); 
+        }
+
+        function updateMiniGame() {
+            if (gameState !== 'reeling') return;
+            
+            let reelSpeed = upgradeReelBought ? 0.35 : 0.25;
+            let maxTensionLimit = upgradeRodBought ? 115 : 100; 
+            
+            let fishStrength = activeFish.difficulty * 0.2;
+            let fishJerking = Math.random() < 0.05 ? (activeFish.difficulty * 3) : 0; 
+
+            // Логіка ЛКМ (Котушка)
+            if (isLMB) {
+                catchProgress += reelSpeed;
+                lineTension += (0.6 + fishStrength);
+                reelRotation += 20; reelHandle.style.transform = `rotate(${reelRotation}deg)`;
+            } else {
+                catchProgress -= (fishStrength * 0.4);
+                lineTension -= 1.5; 
+            }
+
+            // Логіка ПКМ (Тягнути вудку на себе)
+            if (isRMB) {
+                lineTension += 1.2; 
+                catchProgress += 0.1; 
+            }
+
+            lineTension += fishJerking;
+            if (lineTension < 0) lineTension = 0;
+            if (catchProgress < 0) catchProgress = 0;
+
+            // ========================================
+            // ОНОВЛЕНИЙ РОЗРАХУНОК НАХИЛУ ВУДКИ
+            // ========================================
+            let floatX = parseFloat(floatObj.style.left) + 15;
+            let rodBaseX = window.innerWidth * 0.8;
+            
+            // Базовий кут напрямку до поплавка (від -90 до 0)
+            let baseAngle = ((floatX - rodBaseX) / window.innerWidth) * 90;
+            if (baseAngle < -85) baseAngle = -85;
+            if (baseAngle > 15) baseAngle = 15;
+
+            if (isRMB) {
+                // ПІДСІКАННЯ/ТЯГА: Вудка різко піднімається вгору (але не перевертається назад)
+                let pullAngle = baseAngle + 45;
+                if (pullAngle > 10) pullAngle = 10; // Максимальний нахил назад
+                rodObj.style.transform = `rotate(${pullAngle}deg) scaleY(0.95)`;
+            } else {
+                // НАМОТУВАННЯ (ЛКМ) або СПОКІЙ: Вудка гнеться до води від напруги, НЕ піднімається
+                let tensionBend = isLMB ? (lineTension / maxTensionLimit) * 15 : 0; 
+                let finalAngle = baseAngle - tensionBend; // Віднімаємо, щоб нахилити нижче
+                if (finalAngle < -85) finalAngle = -85; // Щоб не пішла під воду
+                rodObj.style.transform = `rotate(${finalAngle}deg)`;
+            }
+
+            // ОНОВЛЕННЯ ІНТЕРФЕЙСУ UI
+            let tensionPercent = (lineTension / maxTensionLimit) * 100;
+            if(tensionPercent > 100) tensionPercent = 100;
+            
+            tensionFillUI.style.height = tensionPercent + '%';
+            
+            if (tensionPercent < 50) {
+                tensionFillUI.style.backgroundColor = '#4CAF50'; // Зелений
+            } else if (tensionPercent < 85) {
+                tensionFillUI.style.backgroundColor = '#FFC107'; // Жовтий
+            } else {
+                tensionFillUI.style.backgroundColor = '#F44336'; // Червоний
+            }
+
+            progressFillUI.style.height = (catchProgress > 100 ? 100 : catchProgress) + '%';
+
+            // УМОВИ ПЕРЕМОГИ / ПОРАЗКИ
+            if (lineTension >= maxTensionLimit) {
+                clearInterval(gameLoopInterval);
+                if (currentBaitId === 'lure') { baitInventory.lure = 0; updateBaitUI(); }
+                showMessage("❌ ОБРИВ ВОЛОСІНІ! Ви перетягнули ліску...");
+                saveProgress();
+                endFishingAttempt();
+            } else if (catchProgress >= 100) {
+                clearInterval(gameLoopInterval); 
+                fishCaught();
+            } else if (catchProgress <= 0 && !isLMB && !isRMB) { 
+                clearInterval(gameLoopInterval);
+                showMessage("Ех, риба зірвалась і втекла...");
+                endFishingAttempt();
+            }
+        }
+
+        function fishCaught() {
+            let weight = Math.random() * (activeFish.maxWeight - activeFish.minWeight) + activeFish.minWeight; weight = parseFloat(weight.toFixed(2));
+            tempFishData = { name: activeFish.name, weight: weight, difficulty: activeFish.difficulty };
+            miniGameUI.style.display = 'none'; gameState = 'confirming';
+            
+            const confirmName = document.getElementById('confirm-fish-name');
+            const confirmWeight = document.getElementById('confirm-fish-weight');
+            confirmName.innerText = tempFishData.name; confirmWeight.innerText = tempFishData.weight;
+            
+            const fClass = getFishClass(tempFishData.weight); confirmName.className = fClass; confirmWeight.className = fClass;
+
+            const imgElement = document.getElementById('confirm-fish-image'); const placeholderElement = document.getElementById('confirm-photo-placeholder');
+            if (activeFish.image) { imgElement.src = activeFish.image; imgElement.style.display = 'block'; placeholderElement.style.display = 'none'; } else { imgElement.style.display = 'none'; placeholderElement.style.display = 'block'; }
+            
+            if(tempFishData.weight > 40) { photoBoxUI.style.borderColor = "#d35400"; photoBoxUI.style.boxShadow = "0 0 15px rgba(211, 84, 0, 0.5)"; } else { photoBoxUI.style.borderColor = "#ccc"; photoBoxUI.style.boxShadow = "inset 0 2px 5px rgba(0,0,0,0.1)"; }
+            
+            let currentCapacity = keepnetData[currentKeepnetLevel].capacity; let btnTake = document.getElementById('btn-take-fish'); let warningText = document.getElementById('capacity-warning');
+            if (totalWeight + tempFishData.weight > currentCapacity) { btnTake.disabled = true; btnTake.style.backgroundColor = "#555"; warningText.style.display = "block"; }
+            else { btnTake.disabled = false; btnTake.style.backgroundColor = "#4CAF50"; warningText.style.display = "none"; }
+            confirmModal.style.display = 'flex';
+        }
+
+        function endFishingAttempt() { 
+            if(gameState !== 'confirming') gameState = 'cooldown'; 
+            isLMB = false; isRMB = false; 
+            floatObj.style.display = 'none'; floatObj.classList.remove('biting'); miniGameUI.style.display = 'none'; rodObj.style.transform = 'rotate(-15deg)'; 
+            setTimeout(() => { if (gameState === 'cooldown' || gameState === 'confirming') resetRod(); }, 2500); 
+        }
+        
+        function resetRod() { if(confirmModal.style.display === 'flex') return; gameState = 'idle'; showMessage("ЛКМ - Закинути | ПКМ - Підсікти"); rodObj.style.transform = 'rotate(-15deg)'; }
+        function showMessage(text) { msgBox.innerHTML = text; }
+    </script>
+</body>
+</html>
