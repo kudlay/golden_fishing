@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Гра: Риболовля 18.0 (Повна система снастей)</title>
+    <title>Гра: Риболовля 18.0 (Динамічний живець)</title>
     <style>
         body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; background-color: #87CEEB; user-select: none; }
         
@@ -87,6 +87,7 @@
         
         #float { position: absolute; top: 55%; left: 40%; font-size: 30px; display: none; z-index: 3; transform-origin: center bottom; pointer-events: none; }
         #float::after { content: "🔴"; }
+        #float.spinner-style::after { content: "🌀"; font-size: 24px;} 
 
         @keyframes bite { 0% { transform: translateY(0); } 50% { transform: translateY(15px) scaleY(0.8); } 100% { transform: translateY(0); } }
         .biting { animation: bite 0.2s infinite; }
@@ -97,7 +98,7 @@
         /* ОНОВЛЕНИЙ ІНТЕРФЕЙС МІНІ-ГРИ */
         #mini-game-container { display: none; position: absolute; bottom: 40px; right: 30px; display: flex; gap: 20px; align-items: flex-end; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; z-index: 6; border: 2px solid #555; pointer-events: none; }
         
-        #tension-bar-container { position: relative; width: 40px; height: 300px; background-color: #222; border: 3px solid #fff; border-radius: 5px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+        #tension-bar-container { position: relative; width: 40px; height: 300px; background: #222; border: 3px solid #fff; border-radius: 5px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
         #tension-fill { width: 100%; height: 0%; background-color: #4CAF50; transition: height 0.1s, background-color 0.2s; box-shadow: 0 0 10px inset rgba(0,0,0,0.5); }
         .tension-labels { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 12px; padding: 5px 0; box-sizing: border-box;}
         
@@ -201,18 +202,18 @@
         
         <div id="ui-panel">
             <div style="font-size: 18px; color: #d35400; font-weight: bold; text-align: center; margin-bottom: 10px;">🪙 <span id="coins-count">0</span></div>
-            <div id="current-bait-display">Наживка: 🪱 Хробак (<span id="main-bait-qty">30</span>)</div>
+            <div id="current-bait-display">Наживка: Хробак (<span id="main-bait-qty">30</span>)</div>
             <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
             <p style="margin: 5px 0;">🎣 Снасть витримає: до <b id="current-max-catch" style="color: #1e3c72;">1.5</b> кг</p>
             <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
             
-            <button class="ui-btn" style="background-color: #2196F3;" onclick="toggleBaitMenu()">🪝 Наживка</button>
-            <button class="ui-btn" style="background-color: #9C27B0;" onclick="toggleEncyclopedia()">📖 Енциклопедія</button>
-            <button class="ui-btn" style="background-color: #ff9800; font-size: 16px;" onclick="toggleMarket()">🛒 Ринок</button>
+            <button class="ui-btn" style="background-color: #2196F3;" onclick="toggleBaitMenu()">Наживка / Блешні</button>
+            <button class="ui-btn" style="background-color: #9C27B0;" onclick="toggleEncyclopedia()">Енциклопедія</button>
+            <button class="ui-btn" style="background-color: #ff9800; font-size: 16px;" onclick="toggleMarket()">Ринок</button>
             <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
             <p style="margin: 5px 0;">🐟 Садок: <span id="fish-count">0</span> шт.</p>
             <p style="margin: 5px 0 10px 0;">⚖️ Вага: <span id="total-weight">0.00</span> / <span id="max-weight">50</span> кг</p>
-            <button class="ui-btn" style="background-color: #4CAF50;" onclick="toggleInventory()">👀 Садок</button>
+            <button class="ui-btn" style="background-color: #4CAF50;" onclick="toggleInventory()">Садок</button>
             <button class="ui-btn close-btn" onclick="exitToLocationMenu()">Вийти з Локації (ESC)</button>
         </div>
 
@@ -256,6 +257,7 @@
     <div id="inventory-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>Ваш улов (Садок)</h2>
+            <button class="ui-btn select-btn" style="background-color: #ff9800; margin-bottom: 10px;" onclick="craftLiveBait()">🔪 Переробити рибу до 100г на живця</button>
             <div id="inventory-list" class="list-container"></div>
             <button class="ui-btn close-btn" onclick="toggleInventory()">Закрити (ESC)</button>
         </div>
@@ -264,10 +266,18 @@
     <div id="bait-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>Коробка з наживками</h2>
-            <div class="list-container">
-                <div class="list-item"><span>🍞 Хліб <span class="bait-qty" id="menu-qty-bread">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('bread', '🍞 Хліб')">Обрати</button></div>
-                <div class="list-item"><span>🪱 Хробак <span class="bait-qty" id="menu-qty-worm">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('worm', '🪱 Хробак')">Обрати</button></div>
-                <div class="list-item"><span>🐟 Блешня <span class="bait-qty" id="menu-qty-lure">(1 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('lure', '🐟 Блешня')">Обрати</button></div>
+            <div class="list-container" id="bait-list-container">
+                <div class="list-item"><span>🍞 Хліб <span class="bait-qty" id="menu-qty-bread">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('bread')">Обрати</button></div>
+                <div class="list-item"><span>🪱 Хробак <span class="bait-qty" id="menu-qty-worm">(30 шт)</span></span><button class="ui-btn select-btn" onclick="setBait('worm')">Обрати</button></div>
+                
+                <div id="dynamic-live-baits">
+                    </div>
+
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
+                
+                <div class="list-item"><span>🌀 Блешня (срібна) <span class="bait-qty" id="menu-qty-lure_1">(1 шт)</span></span><button class="ui-btn select-btn" style="background-color: #f57c00;" onclick="setBait('lure_1')">Спінінг</button></div>
+                <div class="list-item"><span>🌀 Блешня (золота) <span class="bait-qty" id="menu-qty-lure_2">(1 шт)</span></span><button class="ui-btn select-btn" style="background-color: #f57c00;" onclick="setBait('lure_2')">Спінінг</button></div>
+                <div class="list-item"><span>🌀 Блешня (зелена) <span class="bait-qty" id="menu-qty-lure_3">(1 шт)</span></span><button class="ui-btn select-btn" style="background-color: #f57c00;" onclick="setBait('lure_3')">Спінінг</button></div>
             </div>
             <button class="ui-btn close-btn" onclick="toggleBaitMenu()">Закрити (ESC)</button>
         </div>
@@ -310,9 +320,14 @@
                     </div>
                     <div class="market-section">
                         <h3>🎣 Купівля Наживок</h3>
-                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🍞 Хліб (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('bread', 10, 10)">🪙 10</button></div>
-                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🪱 Хробаки (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('worm', 10, 15)">🪙 15</button></div>
-                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">🐟 Блешня (1 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('lure', 1, 30)">🪙 30</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">Хліб (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('bread', 10, 10)">🪙 10</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">Хробаки (10 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('worm', 10, 15)">🪙 15</button></div>
+                        
+                        <hr style="border: 0; border-top: 1px solid #90caf9; margin: 10px 0;">
+                        
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">Блешня (срібна) (1 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('lure_1', 1, 30)">🪙 30</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">Блешня (золота) (1 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('lure_2', 1, 30)">🪙 30</button></div>
+                        <div class="upgrade-item"><div class="upgrade-info"><span class="upgrade-name">Блешня (зелена) (1 шт)</span></div><button class="ui-btn buy-btn" onclick="buyBait('lure_3', 1, 30)">🪙 30</button></div>
                     </div>
                 </div>
                 <div class="market-col">
@@ -349,81 +364,88 @@
         const fishDatabase = {
             dnipro: [
                 { name: "Верховодка", minWeight: 0.01, maxWeight: 0.1, difficulty: 0.2, baits: ['bread'], image: TEST_IMAGE },
+                { name: "Тюлька", minWeight: 0.01, maxWeight: 0.05, difficulty: 0.2, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Йорж", minWeight: 0.05, maxWeight: 0.15, difficulty: 0.5, baits: ['worm'], image: TEST_IMAGE },
                 { name: "Краснопірка", minWeight: 0.1, maxWeight: 0.4, difficulty: 0.8, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Плітка", minWeight: 0.05, maxWeight: 0.5, difficulty: 0.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
                 { name: "Густера", minWeight: 0.1, maxWeight: 0.8, difficulty: 0.8, baits: ['worm', 'bread'], image: TEST_IMAGE },
-                { name: "Чехоня", minWeight: 0.2, maxWeight: 1.0, difficulty: 1.0, baits: ['worm', 'lure'], image: TEST_IMAGE },
+                { name: "Чехоня", minWeight: 0.2, maxWeight: 1.0, difficulty: 1.0, baits: ['worm', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Карась", minWeight: 0.1, maxWeight: 1.5, difficulty: 1.0, baits: ['bread', 'worm'], image: TEST_IMAGE },
-                { name: "Окунь", minWeight: 0.1, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Голавль", minWeight: 0.5, maxWeight: 2.5, difficulty: 2.0, baits: ['worm', 'lure'], image: TEST_IMAGE },
+                { name: "Окунь", minWeight: 0.1, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Голавль", minWeight: 0.5, maxWeight: 2.5, difficulty: 2.0, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Линок", minWeight: 0.5, maxWeight: 2.5, difficulty: 1.5, baits: ['worm'], image: TEST_IMAGE },
                 { name: "Лящ", minWeight: 0.5, maxWeight: 3.0, difficulty: 1.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
-                { name: "Судак", minWeight: 0.8, maxWeight: 6.0, difficulty: 3.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Щука", minWeight: 1.0, maxWeight: 8.0, difficulty: 2.5, baits: ['lure'], image: TEST_IMAGE },
+                { name: "Судак", minWeight: 0.8, maxWeight: 6.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Щука", minWeight: 1.0, maxWeight: 8.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Білий амур", minWeight: 2.0, maxWeight: 25.0, difficulty: 3.5, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Товстолоб", minWeight: 3.0, maxWeight: 35.0, difficulty: 3.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
                 { name: "Короп (Трофей)", minWeight: 1.0, maxWeight: 50.0, difficulty: 4.0, baits: ['bread', 'worm'], image: TEST_IMAGE },
-                { name: "Сом (Трофей)", minWeight: 15.0, maxWeight: 250.0, difficulty: 5.5, baits: ['worm', 'lure'], image: TEST_IMAGE }
+                { name: "Сом (Трофей)", minWeight: 15.0, maxWeight: 250.0, difficulty: 5.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE }
             ],
             sea: [
                 { name: "Тюлька", minWeight: 0.01, maxWeight: 0.05, difficulty: 0.2, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Зеленушка", minWeight: 0.05, maxWeight: 0.2, difficulty: 0.5, baits: ['worm'], image: TEST_IMAGE },
                 { name: "Бичок", minWeight: 0.05, maxWeight: 0.3, difficulty: 0.5, baits: ['worm'], image: TEST_IMAGE },
                 { name: "Барабуля", minWeight: 0.1, maxWeight: 0.3, difficulty: 1.0, baits: ['worm'], image: TEST_IMAGE },
-                { name: "Ставрида", minWeight: 0.1, maxWeight: 0.6, difficulty: 1.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Сарган", minWeight: 0.2, maxWeight: 0.8, difficulty: 2.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Скорпена", minWeight: 0.2, maxWeight: 1.0, difficulty: 1.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Луфар", minWeight: 0.3, maxWeight: 1.5, difficulty: 2.5, baits: ['lure'], image: TEST_IMAGE },
+                { name: "Ставрида", minWeight: 0.1, maxWeight: 0.6, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Сарган", minWeight: 0.2, maxWeight: 0.8, difficulty: 2.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Скорпена", minWeight: 0.2, maxWeight: 1.0, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Луфар", minWeight: 0.3, maxWeight: 1.5, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Кефаль", minWeight: 0.5, maxWeight: 2.5, difficulty: 2.0, baits: ['bread'], image: TEST_IMAGE },
-                { name: "Горбиль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Камбала", minWeight: 1.0, maxWeight: 4.0, difficulty: 2.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
+                { name: "Горбиль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Камбала", minWeight: 1.0, maxWeight: 4.0, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Пеленгас", minWeight: 1.0, maxWeight: 5.0, difficulty: 2.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
-                { name: "Лосось чорноморський", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Катран", minWeight: 2.0, maxWeight: 15.0, difficulty: 4.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Тунець (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 5.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Білуга (Унікальний)", minWeight: 50.0, maxWeight: 500.0, difficulty: 6.0, baits: ['lure', 'worm'], image: TEST_IMAGE }
+                { name: "Лосось чорноморський", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Катран", minWeight: 2.0, maxWeight: 15.0, difficulty: 4.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Тунець (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Білуга (Унікальний)", minWeight: 50.0, maxWeight: 500.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3', 'worm'], image: TEST_IMAGE }
             ],
             yama: [
                 { name: "Гольян", minWeight: 0.02, maxWeight: 0.1, difficulty: 0.5, baits: ['worm', 'bread'], image: TEST_IMAGE },
-                { name: "Харіус", minWeight: 0.2, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
+                { name: "Харіус", minWeight: 0.2, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Сиг", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm'], image: TEST_IMAGE },
-                { name: "Омуль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Мальма", minWeight: 0.5, maxWeight: 3.5, difficulty: 2.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Кунджа", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.5, baits: ['lure'], image: TEST_IMAGE },
+                { name: "Омуль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Мальма", minWeight: 0.5, maxWeight: 3.5, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Кунджа", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Муксун", minWeight: 1.0, maxWeight: 5.0, difficulty: 2.5, baits: ['worm'], image: TEST_IMAGE },
-                { name: "Ленок", minWeight: 1.0, maxWeight: 6.0, difficulty: 2.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Нерка", minWeight: 2.0, maxWeight: 7.0, difficulty: 4.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Голець", minWeight: 1.0, maxWeight: 8.0, difficulty: 3.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Кета", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Кижуч", minWeight: 3.0, maxWeight: 12.0, difficulty: 4.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Минь", minWeight: 2.0, maxWeight: 15.0, difficulty: 3.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Нельма", minWeight: 3.0, maxWeight: 20.0, difficulty: 4.5, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Чавича", minWeight: 5.0, maxWeight: 25.0, difficulty: 5.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Таймень (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 6.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Осетер сибірський (Трофей)", minWeight: 15.0, maxWeight: 100.0, difficulty: 5.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Калуга (Унікальний)", minWeight: 50.0, maxWeight: 800.0, difficulty: 6.0, baits: ['lure', 'worm'], image: TEST_IMAGE }
+                { name: "Ленок", minWeight: 1.0, maxWeight: 6.0, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Нерка", minWeight: 2.0, maxWeight: 7.0, difficulty: 4.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Голець", minWeight: 1.0, maxWeight: 8.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Кета", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Кижуч", minWeight: 3.0, maxWeight: 12.0, difficulty: 4.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Минь", minWeight: 2.0, maxWeight: 15.0, difficulty: 3.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Нельма", minWeight: 3.0, maxWeight: 20.0, difficulty: 4.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Чавича", minWeight: 5.0, maxWeight: 25.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Таймень (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Осетер сибірський (Трофей)", minWeight: 15.0, maxWeight: 100.0, difficulty: 5.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Калуга (Унікальний)", minWeight: 50.0, maxWeight: 800.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3', 'worm'], image: TEST_IMAGE }
             ],
             amazon: [
                 { name: "Неон", minWeight: 0.01, maxWeight: 0.05, difficulty: 0.5, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Кандіру", minWeight: 0.05, maxWeight: 0.2, difficulty: 2.0, baits: ['worm'], image: TEST_IMAGE },
-                { name: "Піранья", minWeight: 0.5, maxWeight: 3.5, difficulty: 1.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
+                { name: "Піранья", minWeight: 0.5, maxWeight: 3.5, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Цихліда", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.0, baits: ['worm', 'bread'], image: TEST_IMAGE },
-                { name: "Аравана", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Тукунаре", minWeight: 1.0, maxWeight: 12.0, difficulty: 2.5, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Трахіра", minWeight: 1.0, maxWeight: 15.0, difficulty: 2.5, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Пайара (Вампір)", minWeight: 2.0, maxWeight: 18.0, difficulty: 3.5, baits: ['lure'], image: TEST_IMAGE },
+                { name: "Аравана", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Тукунаре", minWeight: 1.0, maxWeight: 12.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Трахіра", minWeight: 1.0, maxWeight: 15.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Пайара (Вампір)", minWeight: 2.0, maxWeight: 18.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Паку", minWeight: 1.0, maxWeight: 25.0, difficulty: 2.0, baits: ['bread'], image: TEST_IMAGE },
-                { name: "Гігантський кальмар (Трофей)", minWeight: 10.0, maxWeight: 50.0, difficulty: 5.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Сом-червонохвіст (Трофей)", minWeight: 5.0, maxWeight: 80.0, difficulty: 4.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Піраїба (Трофей)", minWeight: 30.0, maxWeight: 200.0, difficulty: 5.5, baits: ['worm', 'lure'], image: TEST_IMAGE },
-                { name: "Арапайма (Трофей)", minWeight: 40.0, maxWeight: 250.0, difficulty: 6.0, baits: ['lure'], image: TEST_IMAGE },
-                { name: "Акула-бик (Унікальний)", minWeight: 20.0, maxWeight: 1100.0, difficulty: 6.5, baits: ['lure'], image: TEST_IMAGE }
+                { name: "Гігантський кальмар (Трофей)", minWeight: 10.0, maxWeight: 50.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Сом-червонохвіст (Трофей)", minWeight: 5.0, maxWeight: 80.0, difficulty: 4.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Піраїба (Трофей)", minWeight: 30.0, maxWeight: 200.0, difficulty: 5.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Арапайма (Трофей)", minWeight: 40.0, maxWeight: 250.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Акула-бик (Унікальний)", minWeight: 20.0, maxWeight: 1100.0, difficulty: 6.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE }
             ]
         };
 
-        const baitIcons = { 'bread': '🍞', 'worm': '🪱', 'lure': '🐟' };
-        const baitNames = { 'bread': '🍞 Хліб', 'worm': '🪱 Хробак', 'lure': '🐟 Блешня' };
+        const baitNames = { 
+            'bread': 'Хліб', 
+            'worm': 'Хробак', 
+            'live_bait': 'Живець',
+            'lure_1': 'Блешня (срібна)', 
+            'lure_2': 'Блешня (золота)', 
+            'lure_3': 'Блешня (зелена)' 
+        };
 
         const keepnetData = [
             { level: 1, capacity: 50, cost: 0 },
@@ -501,7 +523,8 @@
         let currentRodLevel = 0; 
         let currentReelLevel = 0; 
         let currentKeepnetLevel = 0;
-        let currentBaitId = 'worm'; let baitInventory = { bread: 30, worm: 30, lure: 1 };
+        
+        let currentBaitId = 'worm'; let baitInventory = { bread: 30, worm: 30, lure_1: 1, lure_2: 1, lure_3: 1 };
         
         let gameState = 'idle'; let currentLocation = ''; let caughtFishArray = []; let totalWeight = 0;
         let biteTimeout; let activeFish = null; let activeFishWeight = 0; let tempFishData = null;
@@ -509,6 +532,8 @@
         let isLMB = false; let isRMB = false;
         let catchProgress = 20; let lineTension = 0;
         let gameLoopInterval; let reelRotation = 0;
+        let isSpinner = false; let spinnerPosition = 100;
+        let spinnerInterval;
         
         let gameMinute = 360; let gameDay = 1; let clockInterval;
 
@@ -570,9 +595,9 @@
 
         function confirmCreateProfile(mode) {
             let newProfile = {};
-            if (mode === 'sandbox') newProfile = { mode: 'Пісочниця', level: 100, exp: 0, coins: 9999999, rodLevel: 24, reelLevel: 24, keepnetLevel: 7, inventory: { bread: 999, worm: 999, lure: 999 }, fish: [], weight: 0 };
-            else if (mode === 'experienced') newProfile = { mode: 'Досвідчений', level: 20, exp: 0, coins: 20000, rodLevel: 9, reelLevel: 9, keepnetLevel: 0, inventory: { bread: 100, worm: 100, lure: 10 }, fish: [], weight: 0 };
-            else newProfile = { mode: 'Звичайна', level: 1, exp: 0, coins: 0, rodLevel: 0, reelLevel: 0, keepnetLevel: 0, inventory: { bread: 30, worm: 30, lure: 1 }, fish: [], weight: 0 };
+            if (mode === 'sandbox') newProfile = { mode: 'Пісочниця', level: 100, exp: 0, coins: 9999999, rodLevel: 24, reelLevel: 24, keepnetLevel: 7, inventory: { bread: 999, worm: 999, lure_1: 99, lure_2: 99, lure_3: 99 }, fish: [], weight: 0 };
+            else if (mode === 'experienced') newProfile = { mode: 'Досвідчений', level: 20, exp: 0, coins: 20000, rodLevel: 9, reelLevel: 9, keepnetLevel: 0, inventory: { bread: 100, worm: 100, lure_1: 1, lure_2: 1, lure_3: 1 }, fish: [], weight: 0 };
+            else newProfile = { mode: 'Звичайна', level: 1, exp: 0, coins: 0, rodLevel: 0, reelLevel: 0, keepnetLevel: 0, inventory: { bread: 30, worm: 30, lure_1: 1, lure_2: 1, lure_3: 1 }, fish: [], weight: 0 };
             
             savedProfiles[creatingSlotIndex] = newProfile; localStorage.setItem(STORAGE_KEY, JSON.stringify(savedProfiles)); closeCreateProfileModal(); renderSlots();
         }
@@ -586,7 +611,11 @@
             currentRodLevel = data.rodLevel || 0; 
             currentReelLevel = data.reelLevel || 0;
             currentKeepnetLevel = data.keepnetLevel; baitInventory = data.inventory; caughtFishArray = data.fish; totalWeight = data.weight;
-            if(baitInventory.lure === undefined) baitInventory.lure = 1;
+            
+            if(baitInventory.lure_1 === undefined) { baitInventory.lure_1 = 1; baitInventory.lure_2 = 1; baitInventory.lure_3 = 1; }
+            
+            // Видаляємо старий базовий 'live_bait', якщо він випадково зберігся, оскільки тепер живець динамічний
+            if(baitInventory.live_bait !== undefined) { delete baitInventory.live_bait; }
             
             updateLevelUI(); updateTackleUI(); profileMenu.style.display = 'none'; showLocationMenu();
         }
@@ -597,7 +626,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedProfiles));
         }
 
-        function exitToProfileMenu() { saveProgress(); activeProfileIndex = -1; mainMenu.style.display = 'none'; renderSlots(); profileMenu.style.display = 'flex'; clearInterval(clockInterval); }
+        function exitToProfileMenu() { saveProgress(); activeProfileIndex = -1; mainMenu.style.display = 'none'; renderSlots(); profileMenu.style.display = 'flex'; clearInterval(clockInterval); clearInterval(spinnerInterval); }
 
         function showLocationMenu() {
             gameScreen.style.display = 'none'; mainMenu.style.display = 'flex';
@@ -612,6 +641,7 @@
             if (playerLevel < 25) { amazonBtn.disabled = true; amazonBtn.innerHTML = "🔒 Дельта Амазонки (з 25 рівня)"; } else { amazonBtn.disabled = false; amazonBtn.innerHTML = "Дельта Амазонки"; }
             
             clearInterval(clockInterval);
+            clearInterval(spinnerInterval);
         }
 
         function calculateExpNeeded(lvl) { return Math.floor(100 * Math.pow(1.3, lvl - 1)); }
@@ -649,17 +679,58 @@
             clearInterval(clockInterval);
             clockInterval = setInterval(updateGameTime, 5000);
             updateLighting(Math.floor(gameMinute / 60));
+
+            clearInterval(spinnerInterval);
+            spinnerInterval = setInterval(updateSpinnerLogic, 30);
         }
         
-        function exitToLocationMenu() { saveProgress(); clearTimeout(biteTimeout); clearInterval(gameLoopInterval); clearInterval(clockInterval); resetRod(); closeAllModals(); showLocationMenu(); }
+        function exitToLocationMenu() { saveProgress(); clearTimeout(biteTimeout); clearInterval(gameLoopInterval); clearInterval(clockInterval); clearInterval(spinnerInterval); resetRod(); closeAllModals(); showLocationMenu(); }
         function closeAllModals() { inventoryModal.style.display = 'none'; baitModal.style.display = 'none'; encyclopediaModal.style.display = 'none'; marketModal.style.display = 'none'; }
 
         function updateBaitUI() {
-            let qty = baitInventory[currentBaitId]; let color = qty > 0 ? '#d35400' : '#f44336';
-            baitDisplay.innerHTML = `Наживка: ${baitNames[currentBaitId]} <span style="color:${color}">(${qty})</span>`;
+            // Перевіряємо чи є вибраний живець. Якщо витратили - скидаємо на хробака
+            if (currentBaitId.startsWith('live_') && (!baitInventory[currentBaitId] || baitInventory[currentBaitId] <= 0)) {
+                currentBaitId = 'worm';
+            }
+
+            let qty = baitInventory[currentBaitId] || 0; 
+            let color = qty > 0 ? '#d35400' : '#f44336';
+            
+            let dispName = baitNames[currentBaitId];
+            let icon = '🪱';
+            
+            if (currentBaitId === 'bread') { icon = '🍞'; }
+            else if (currentBaitId.startsWith('lure_')) { icon = '🌀'; }
+            else if (currentBaitId.startsWith('live_')) { 
+                icon = '🐟'; 
+                let fishName = currentBaitId.replace('live_', '');
+                dispName = `Живець (${fishName})`;
+            }
+
+            baitDisplay.innerHTML = `Наживка: ${icon} ${dispName} <span style="color:${color}">(${qty})</span>`;
+            
             document.getElementById('menu-qty-bread').innerText = `(${baitInventory.bread} шт)`; document.getElementById('menu-qty-bread').className = baitInventory.bread > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
             document.getElementById('menu-qty-worm').innerText = `(${baitInventory.worm} шт)`; document.getElementById('menu-qty-worm').className = baitInventory.worm > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
-            document.getElementById('menu-qty-lure').innerText = `(${baitInventory.lure} шт)`; document.getElementById('menu-qty-lure').className = baitInventory.lure > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            document.getElementById('menu-qty-lure_1').innerText = `(${baitInventory.lure_1} шт)`; document.getElementById('menu-qty-lure_1').className = baitInventory.lure_1 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            document.getElementById('menu-qty-lure_2').innerText = `(${baitInventory.lure_2} шт)`; document.getElementById('menu-qty-lure_2').className = baitInventory.lure_2 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            document.getElementById('menu-qty-lure_3').innerText = `(${baitInventory.lure_3} шт)`; document.getElementById('menu-qty-lure_3').className = baitInventory.lure_3 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+
+            // Оновлюємо динамічний список живців
+            let dynamicContainer = document.getElementById('dynamic-live-baits');
+            if (dynamicContainer) {
+                dynamicContainer.innerHTML = '';
+                let hasLiveBaits = false;
+                for (let key in baitInventory) {
+                    if (key.startsWith('live_') && baitInventory[key] > 0) {
+                        hasLiveBaits = true;
+                        let fName = key.replace('live_', '');
+                        dynamicContainer.innerHTML += `<div class="list-item"><span>🐟 Живець (${fName}) <span class="bait-qty">(${baitInventory[key]} шт)</span></span><button class="ui-btn select-btn" onclick="setBait('${key}')">Обрати</button></div>`;
+                    }
+                }
+                if (!hasLiveBaits) {
+                    dynamicContainer.innerHTML = `<div class="list-item" style="color:#888; font-style:italic; justify-content:center;">Немає живця. Переробіть дрібну рибу (до 100г) у садку.</div>`;
+                }
+            }
         }
         
         function updateKeepnetUI() { document.getElementById('fish-count').innerText = caughtFishArray.length; document.getElementById('total-weight').innerText = totalWeight.toFixed(2); document.getElementById('max-weight').innerText = keepnetData[currentKeepnetLevel].capacity; }
@@ -676,6 +747,53 @@
             inventoryModal.style.display = 'flex';
         }
 
+        // НОВА ФУНКЦІЯ: КРАФТ ДИНАМІЧНОГО ЖИВЦЯ
+        function craftLiveBait() {
+            let craftedCount = 0;
+            let newFishArray = [];
+            let newTotalWeight = 0;
+            let craftedTypes = {}; 
+
+            for (let i = 0; i < caughtFishArray.length; i++) {
+                let fish = caughtFishArray[i];
+                if (fish.weight <= 0.1) {
+                    craftedCount++;
+                    let baitId = 'live_' + fish.name;
+                    if (baitInventory[baitId] === undefined) baitInventory[baitId] = 0;
+                    baitInventory[baitId]++;
+                    craftedTypes[fish.name] = (craftedTypes[fish.name] || 0) + 1;
+                } else {
+                    newFishArray.push(fish);
+                    newTotalWeight += fish.weight;
+                }
+            }
+
+            if (craftedCount > 0) {
+                caughtFishArray = newFishArray;
+                totalWeight = newTotalWeight;
+                
+                updateKeepnetUI();
+                updateBaitUI();
+                saveProgress();
+                
+                // Перемальовуємо садок
+                inventoryList.innerHTML = caughtFishArray.length === 0 ? '<p style="text-align:center;">Садок порожній...</p>' : '';
+                caughtFishArray.forEach((fish, index) => {
+                    let fClass = getFishClass(fish.name);
+                    let imgTag = fish.image ? `<img src="${fish.image}" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 5px;">` : '';
+                    inventoryList.innerHTML += `<div class="list-item"><span>${index + 1}. ${imgTag}<span class="${fClass}">${fish.name}</span></span><span class="${fClass}">${fish.weight} кг</span></div>`;
+                });
+                
+                let msg = `Успіх! Ви переробили ${craftedCount} дрібних рибин на живця:\n`;
+                for(let k in craftedTypes) {
+                    msg += `- Живець (${k}): ${craftedTypes[k]} шт.\n`;
+                }
+                alert(msg);
+            } else {
+                alert("У садку немає риби вагою до 100 грамів (0.1 кг)!");
+            }
+        }
+
         function toggleBaitMenu() { if (gameState !== 'idle') { showMessage("Змінювати наживку можна лише до закидання!"); return; } if (baitModal.style.display === 'flex') { closeAllModals(); return; } closeAllModals(); updateBaitUI(); baitModal.style.display = 'flex'; }
         
         function toggleEncyclopedia() {
@@ -689,7 +807,11 @@
             let localFishes = fishDatabase[currentLocation];
             
             localFishes.forEach(fish => {
-                let baitsString = fish.baits.map(b => baitIcons[b]).join(' ');
+                let baitsString = fish.baits.map(b => {
+                    if(b === 'live_bait') return 'Живець';
+                    return baitNames[b] ? baitNames[b] : 'Блешня';
+                }).join(', ');
+                
                 let fClass = getFishClass(fish.name);
                 let imageContent = fish.image ? `<img src="${fish.image}" alt="${fish.name}">` : `🐟`;
                 
@@ -709,7 +831,23 @@
         function calculateKeepnetValue() { let value = 0; caughtFishArray.forEach(fish => { let dbFish = fishDatabase[currentLocation].find(f => f.name === fish.name); let diff = dbFish ? dbFish.difficulty : 1; value += fish.weight * diff * 10; }); return Math.floor(value); }
         function sellAllFish() { let value = calculateKeepnetValue(); if(value > 0) { coins += value; caughtFishArray = []; totalWeight = 0; updateKeepnetUI(); updateCoinsUI(); toggleMarket(); showMessage(`Улов продано за 🪙 ${value} монет!`); saveProgress(); } }
 
-        function buyBait(type, amount, cost) { if (coins >= cost) { if (type === 'lure' && baitInventory.lure > 0 && savedProfiles[activeProfileIndex].mode !== 'Пісочниця') { alert("У вас вже є блешня!"); return; } coins -= cost; baitInventory[type] += amount; updateCoinsUI(); updateBaitUI(); showMessage(`Ви купили ${baitNames[type]}!`); saveProgress(); } else { alert("Недостатньо монет!"); } }
+        function buyBait(type, amount, cost) { 
+            if (coins >= cost) { 
+                if(type.startsWith('lure_') && baitInventory[type] > 0) {
+                    alert(`У вас вже є ця блешня! Вона багаторазова.`);
+                    return;
+                }
+                coins -= cost; 
+                baitInventory[type] += amount; 
+                updateCoinsUI(); 
+                updateBaitUI(); 
+                updateMarketUI();
+                showMessage(`Ви купили ${baitNames[type]}!`); 
+                saveProgress(); 
+            } else { 
+                alert("Недостатньо монет!"); 
+            } 
+        }
         
         function buyUpgrade(type, cost) {
             if (type === 'keepnet') {
@@ -771,7 +909,16 @@
         }
 
         function updateCoinsUI() { coinsCountUI.innerText = coins; marketCoinsUI.innerText = coins; }
-        function setBait(baitId, baitName) { if(baitInventory[baitId] <= 0) { alert(`У вас закінчилась наживка!`); return; } currentBaitId = baitId; updateBaitUI(); toggleBaitMenu(); }
+        function setBait(baitId) { 
+            if(!baitInventory[baitId] || baitInventory[baitId] <= 0) { 
+                alert(`У вас закінчилась ця наживка (або немає цієї блешні)!`); 
+                return; 
+            } 
+            currentBaitId = baitId; 
+            isSpinner = currentBaitId.startsWith('lure_'); 
+            updateBaitUI(); 
+            toggleBaitMenu(); 
+        }
 
         function takeFish() {
             let currentCapacity = keepnetData[currentKeepnetLevel].capacity;
@@ -784,7 +931,7 @@
         function releaseFish() { confirmModal.style.display = 'none'; showMessage(`Рибу відпущено.`); tempFishData = null; endFishingAttempt(); }
 
         // ==========================================
-        // КЕРУВАННЯ МИШЕЮ ТА АНІМАЦІЇ ВУДКИ
+        // КЕРУВАННЯ МИШЕЮ ТА АНІМАЦІЇ
         // ==========================================
 
         document.addEventListener('keydown', function(event) {
@@ -804,15 +951,19 @@
                 if (gameState === 'idle') {
                     if(e.clientY > window.innerHeight / 2) castRod(e.clientX, e.clientY);
                     else showMessage("Закидати треба у воду!");
-                } else if (gameState === 'waiting') {
+                } else if (gameState === 'waiting' && !isSpinner) {
                     showMessage("Ви витягли пустий гачок...");
                     clearTimeout(biteTimeout);
                     endFishingAttempt();
+                } else if (gameState === 'cooldown' && isSpinner && spinnerPosition <= 0) {
+                    let targetX = parseFloat(floatObj.dataset.startX) + 15;
+                    let targetY = parseFloat(floatObj.dataset.startY) + 15;
+                    castRod(targetX, targetY, true);
                 }
             } else if (e.button === 2) {
                 isRMB = true;
                 if (gameState === 'biting') startReeling();
-                else if (gameState === 'waiting') {
+                else if (gameState === 'waiting' && !isSpinner) {
                     showMessage("Зарано! Ви злякали рибу.");
                     clearTimeout(biteTimeout);
                     endFishingAttempt();
@@ -835,14 +986,22 @@
             if (gameScreen.style.display === 'block') requestAnimationFrame(drawFishingLine);
         }
 
-        function castRod(targetX, targetY) {
+        function castRod(targetX, targetY, isRecast = false) {
             let currentCapacity = keepnetData[currentKeepnetLevel].capacity;
             if (totalWeight >= currentCapacity) { showMessage("Ваш садок ПОВНИЙ! Продайте рибу."); return; }
-            if (baitInventory[currentBaitId] <= 0) { showMessage(`У вас немає наживки!`); return; }
-            if (currentBaitId !== 'lure') { baitInventory[currentBaitId]--; updateBaitUI(); saveProgress(); }
+            if (!baitInventory[currentBaitId] || baitInventory[currentBaitId] <= 0) { showMessage(`У вас немає наживки!`); return; }
+            
+            if (!isRecast && !isSpinner) {
+                baitInventory[currentBaitId]--; 
+                updateBaitUI(); 
+                saveProgress();
+            }
             
             floatObj.style.left = (targetX - 15) + 'px';
             floatObj.style.top = (targetY - 15) + 'px';
+            
+            floatObj.dataset.startX = targetX - 15;
+            floatObj.dataset.startY = targetY - 15;
             
             let rodBaseX = window.innerWidth * 0.8;
             let castAngle = ((targetX - rodBaseX) / window.innerWidth) * 90;
@@ -851,16 +1010,83 @@
             
             rodObj.style.transform = `rotate(${castAngle}deg)`;
 
-            gameState = 'waiting'; showMessage("Очікування клювання... (ПКМ щоб підсікти)"); setTimeout(() => { floatObj.style.display = 'block'; floatObj.classList.remove('biting'); }, 400); 
-            let waitTime = Math.floor(Math.random() * 4000) + 2000; biteTimeout = setTimeout(fishBiting, waitTime);
+            if (isSpinner) {
+                gameState = 'waiting'; 
+                spinnerPosition = 100;
+                floatObj.style.display = 'block'; 
+                floatObj.classList.remove('biting');
+                showMessage("Блешня у воді. ЗАЖМИ ЛКМ для проводки!");
+            } else {
+                gameState = 'waiting'; 
+                showMessage("Очікування клювання... (ПКМ щоб підсікти)"); 
+                setTimeout(() => { floatObj.style.display = 'block'; floatObj.classList.remove('biting'); }, 400); 
+                let waitTime = Math.floor(Math.random() * 4000) + 2000; 
+                biteTimeout = setTimeout(fishBiting, waitTime);
+            }
+        }
+
+        function updateSpinnerLogic() {
+            if (gameScreen.style.display !== 'block') return;
+            if (gameState === 'waiting' && isSpinner) {
+                if (isLMB) {
+                    spinnerPosition -= 0.4;
+                    floatObj.classList.add('spinner-style');
+                    
+                    let startX = parseFloat(floatObj.dataset.startX);
+                    let startY = parseFloat(floatObj.dataset.startY);
+                    let shoreX = window.innerWidth * 0.5;
+                    let shoreY = window.innerHeight;
+                    
+                    floatObj.style.left = startX + ((100 - spinnerPosition)/100)*(shoreX - startX) + 'px';
+                    floatObj.style.top = startY + ((100 - spinnerPosition)/100)*(shoreY - startY) + 'px';
+                    
+                    reelRotation += 15; reelHandle.style.transform = `rotate(${reelRotation}deg)`;
+                    rodObj.style.transform = `rotate(-10deg) translateY(${Math.sin(Date.now()*0.05)*2}px)`;
+
+                    showMessage("Йде проводка... Готуйся до удару хижака!");
+
+                    if (spinnerPosition > 10 && Math.random() < 0.005) {
+                        fishBitingSpinner();
+                    }
+
+                    if (spinnerPosition <= 0) {
+                        gameState = 'cooldown';
+                        floatObj.style.display = 'none';
+                        floatObj.classList.remove('spinner-style');
+                        rodObj.style.transform = 'rotate(-15deg)';
+                        showMessage("Нічого не клюнуло. КЛІКНИ ЛКМ, щоб закинути знову.");
+                    }
+                } else {
+                    floatObj.classList.remove('spinner-style');
+                    rodObj.style.transform = 'rotate(-15deg)';
+                    showMessage("Блешня зупинилась. ЗАЖМИ ЛКМ, щоб продовжити проводку.");
+                }
+            }
         }
 
         function fishBiting() { gameState = 'biting'; showMessage("КЛЮЄ! Тисни ПКМ щоб підсікти!"); floatObj.classList.add('biting'); biteTimeout = setTimeout(() => { if (gameState === 'biting') { showMessage("Риба з'їла наживку і втекла..."); endFishingAttempt(); } }, 2000); }
 
+        function fishBitingSpinner() {
+            gameState = 'reeling'; 
+            floatObj.classList.remove('spinner-style');
+            floatObj.classList.add('biting');
+            startReelingLoop(true); 
+        }
+
         function startReeling() {
             clearTimeout(biteTimeout); gameState = 'reeling'; 
+            startReelingLoop(false);
+        }
+
+        function startReelingLoop(isSpinnerStrike = false) {
+            let availableFish = fishDatabase[currentLocation].filter(fish => {
+                // Якщо використовується динамічний живець, риба повинна мати тег 'live_bait'
+                if (currentBaitId.startsWith('live_')) {
+                    return fish.baits.includes('live_bait');
+                }
+                return fish.baits.includes(currentBaitId);
+            });
             
-            let availableFish = fishDatabase[currentLocation].filter(fish => fish.baits.includes(currentBaitId));
             if (availableFish.length === 0) { showMessage("Хтось збив наживку..."); endFishingAttempt(); return; }
             
             activeFish = availableFish[Math.floor(Math.random() * availableFish.length)];
@@ -870,19 +1096,27 @@
             
             let rodTest = rodData[currentRodLevel].test;
             let reelTest = reelData[currentReelLevel].test;
-            // Максимальна риба визначається найслабшою ланкою (х2)
             let maxCatchableWeight = Math.min(rodTest, reelTest) * 2;
 
             if (activeFishWeight > maxCatchableWeight) {
                 showMessage(`УВАГА! РИБА ЗАНАДТО ВАЖКА ДЛЯ ВАШОЇ СНАСТІ!`);
             } else if (activeFish.difficulty >= 5) {
                 showMessage(`УВАГА! ГІГАНТ НА ГАЧКУ! ВИТЯГУЙ!`); 
+            } else if (isSpinnerStrike) {
+                showMessage(`УДАР! Є! Витягуй! (ЛКМ - мотати, ПКМ - тягнути)`);
             } else {
                 showMessage(`Є! Зажимай ЛКМ щоб мотати, ПКМ - тягнути!`); 
             }
 
             catchProgress = 20; 
-            lineTension = 15; 
+            
+            if (isSpinnerStrike) {
+                let maxTensionLimit = 100 + (currentRodLevel * 2.5) + (currentReelLevel * 2.5);
+                lineTension = maxTensionLimit * 0.75; 
+            } else {
+                lineTension = 15; 
+            }
+
             miniGameUI.style.display = 'flex';
             
             gameLoopInterval = setInterval(updateMiniGame, 20); 
@@ -891,9 +1125,7 @@
         function updateMiniGame() {
             if (gameState !== 'reeling') return;
             
-            // Комбінований ліміт напруги (чим краща снасть, тим більше пробачає помилок)
             let maxTensionLimit = 100 + (currentRodLevel * 2.5) + (currentReelLevel * 2.5); 
-            // Швидкість намотування залежить від котушки
             let reelSpeed = 0.25 + (currentReelLevel * 0.02); 
             
             let rodTest = rodData[currentRodLevel].test;
@@ -903,7 +1135,6 @@
             let fishStrength = activeFish.difficulty * 0.12; 
             let fishJerking = Math.random() < 0.03 ? (activeFish.difficulty * 1.5) : 0; 
 
-            // Якщо риба заважка, напруга зростає миттєво
             if (activeFishWeight > maxCatchableWeight) {
                 lineTension += 4.0; 
             }
@@ -960,13 +1191,17 @@
 
             if (lineTension >= maxTensionLimit) {
                 clearInterval(gameLoopInterval);
-                if (currentBaitId === 'lure') { baitInventory.lure = 0; updateBaitUI(); }
                 
+                if (isSpinner) {
+                    baitInventory[currentBaitId]--; 
+                    updateBaitUI();
+                }
+
                 if (activeFishWeight > maxCatchableWeight) {
                     let weakestPart = rodTest < reelTest ? "вудку" : "котушку";
-                    showMessage(`❌ ОБРИВ! Риба (≈${Math.round(activeFishWeight)} кг) зламала ${weakestPart}!`);
+                    showMessage(`❌ ОБРИВ! Риба (≈${Math.round(activeFishWeight)} кг) зламала ${weakestPart}! ${isSpinner ? '(Блешню втрачено)' : ''}`);
                 } else {
-                    showMessage("❌ ОБРИВ ВОЛОСІНІ! Ви перетягнули ліску...");
+                    showMessage(`❌ ОБРИВ ВОЛОСІНІ! Ви перетягнули ліску... ${isSpinner ? '(Блешню втрачено)' : ''}`);
                 }
                 
                 saveProgress();
@@ -1009,11 +1244,27 @@
         function endFishingAttempt() { 
             if(gameState !== 'confirming') gameState = 'cooldown'; 
             isLMB = false; isRMB = false; 
-            floatObj.style.display = 'none'; floatObj.classList.remove('biting'); miniGameUI.style.display = 'none'; rodObj.style.transform = 'rotate(-15deg)'; 
+            floatObj.classList.remove('biting', 'spinner-style'); 
+            if(!isSpinner) floatObj.style.display = 'none';
+            miniGameUI.style.display = 'none'; rodObj.style.transform = 'rotate(-15deg)'; 
             setTimeout(() => { if (gameState === 'cooldown' || gameState === 'confirming') resetRod(); }, 2500); 
         }
         
-        function resetRod() { if(confirmModal.style.display === 'flex') return; gameState = 'idle'; showMessage("ЛКМ - Закинути | ПКМ - Підсікти"); rodObj.style.transform = 'rotate(-15deg)'; }
+        function resetRod() { 
+            if(confirmModal.style.display === 'flex') return; 
+            gameState = 'idle'; 
+            
+            if(isSpinner) {
+                floatObj.style.display = 'block';
+                spinnerPosition = 0;
+                floatObj.style.top = '90%';
+                showMessage("ЛКМ - Закинути блешню знову"); 
+            } else {
+                floatObj.style.display = 'none';
+                showMessage("ЛКМ - Закинути | ПКМ - Підсікти"); 
+            }
+            rodObj.style.transform = 'rotate(-15deg)'; 
+        }
         function showMessage(text) { msgBox.innerHTML = text; }
     </script>
 </body>
