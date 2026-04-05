@@ -17,7 +17,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
                 { name: "Судак", minWeight: 0.8, maxWeight: 6.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Щука", minWeight: 1.0, maxWeight: 8.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Білий амур", minWeight: 2.0, maxWeight: 25.0, difficulty: 3.5, baits: ['bread'], image: TEST_IMAGE },
-                { name: "Товстолоб", minWeight: 3.0, maxWeight: 35.0, difficulty: 3.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
+                { name: "Товстолоб (Трофей)", minWeight: 3.0, maxWeight: 65.0, difficulty: 3.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
                 { name: "Короп (Трофей)", minWeight: 1.0, maxWeight: 50.0, difficulty: 4.0, baits: ['bread', 'worm'], image: TEST_IMAGE },
                 { name: "Сом (Трофей)", minWeight: 15.0, maxWeight: 250.0, difficulty: 5.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE }
             ],
@@ -41,23 +41,35 @@ const TEST_IMAGE = "images/fish/plotva.png";
             ],
             yama: [
                 { name: "Гольян", minWeight: 0.02, maxWeight: 0.1, difficulty: 0.5, baits: ['worm', 'bread'], image: TEST_IMAGE },
-                { name: "Харіус", minWeight: 0.2, maxWeight: 1.5, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Харіус", minWeight: 0.2, maxWeight: 5.0, difficulty: 1.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Сиг", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm'], image: TEST_IMAGE },
                 { name: "Омуль", minWeight: 0.5, maxWeight: 3.0, difficulty: 2.0, baits: ['worm', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Мальма", minWeight: 0.5, maxWeight: 3.5, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Кунджа", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Мальма", minWeight: 0.5, maxWeight: 6.5, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Кунджа", minWeight: 0.5, maxWeight: 7.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Муксун", minWeight: 1.0, maxWeight: 5.0, difficulty: 2.5, baits: ['worm'], image: TEST_IMAGE },
-                { name: "Ленок", minWeight: 1.0, maxWeight: 6.0, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Ленок", minWeight: 1.0, maxWeight: 7.0, difficulty: 2.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Нерка", minWeight: 2.0, maxWeight: 7.0, difficulty: 4.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Голець", minWeight: 1.0, maxWeight: 8.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Кета", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Кета", minWeight: 2.0, maxWeight: 15.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Кижуч", minWeight: 3.0, maxWeight: 12.0, difficulty: 4.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Минь", minWeight: 2.0, maxWeight: 15.0, difficulty: 3.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Минь", minWeight: 2.0, maxWeight: 20.0, difficulty: 3.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Нельма", minWeight: 3.0, maxWeight: 20.0, difficulty: 4.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Чавича", minWeight: 5.0, maxWeight: 25.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Чавича (Трофей)", minWeight: 5.0, maxWeight: 65.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Таймень (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Осетер сибірський (Трофей)", minWeight: 15.0, maxWeight: 100.0, difficulty: 5.5, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Калуга (Унікальний)", minWeight: 50.0, maxWeight: 800.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3', 'worm'], image: TEST_IMAGE }
+            ],
+            akhtuba: [
+                { name: "Плітка", minWeight: 0.05, maxWeight: 0.5, difficulty: 0.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
+                { name: "Краснопірка", minWeight: 0.1, maxWeight: 0.4, difficulty: 0.8, baits: ['bread'], image: TEST_IMAGE },
+                { name: "Лящ", minWeight: 0.5, maxWeight: 3.0, difficulty: 1.5, baits: ['bread', 'worm'], image: TEST_IMAGE },
+                { name: "Судак", minWeight: 0.8, maxWeight: 6.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Сазан", minWeight: 1.0, maxWeight: 20.0, difficulty: 3.0, baits: ['bread', 'worm'], image: TEST_IMAGE },
+                { name: "Щука", minWeight: 1.0, maxWeight: 8.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Сом", minWeight: 5.0, maxWeight: 80.0, difficulty: 4.0, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Буффало (Трофей)", minWeight: 5.0, maxWeight: 35.0, difficulty: 4.0, baits: ['bread', 'worm'], image: TEST_IMAGE },
+                { name: "Осетер (Трофей)", minWeight: 10.0, maxWeight: 80.0, difficulty: 5.0, baits: ['worm', 'live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Білуга (Унікальний)", minWeight: 50.0, maxWeight: 500.0, difficulty: 6.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3', 'worm'], image: TEST_IMAGE }
             ],
             amazon: [
                 { name: "Неон", minWeight: 0.01, maxWeight: 0.05, difficulty: 0.5, baits: ['bread'], image: TEST_IMAGE },
@@ -66,7 +78,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
                 { name: "Цихліда", minWeight: 0.5, maxWeight: 4.0, difficulty: 2.0, baits: ['worm', 'bread'], image: TEST_IMAGE },
                 { name: "Аравана", minWeight: 2.0, maxWeight: 10.0, difficulty: 3.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Тукунаре", minWeight: 1.0, maxWeight: 12.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
-                { name: "Трахіра", minWeight: 1.0, maxWeight: 15.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
+                { name: "Трахіра", minWeight: 1.0, maxWeight: 45.0, difficulty: 2.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Пайара (Вампір)", minWeight: 2.0, maxWeight: 18.0, difficulty: 3.5, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
                 { name: "Паку", minWeight: 1.0, maxWeight: 25.0, difficulty: 2.0, baits: ['bread'], image: TEST_IMAGE },
                 { name: "Гігантський кальмар (Трофей)", minWeight: 10.0, maxWeight: 50.0, difficulty: 5.0, baits: ['live_bait', 'lure_1', 'lure_2', 'lure_3'], image: TEST_IMAGE },
@@ -82,9 +94,17 @@ const TEST_IMAGE = "images/fish/plotva.png";
             'worm': 'Хробак', 
             'live_bait': 'Живець',
             'lure_1': 'Блешня (срібна)', 
-            'lure_2': 'Блешня (золота)', 
+            'lure_2': 'Вертушка (золота)', 
             'lure_3': 'Блешня (зелена)' 
         };
+
+        const LOCATION_UNLOCK_LEVELS = { sea: 10, yama: 20, amazon: 25, akhtuba: 28 };
+
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
 
         const keepnetData = [
             { level: 1, capacity: 50, cost: 0 },
@@ -222,7 +242,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
             for (let i = 0; i < 3; i++) {
                 let profile = savedProfiles[i];
                 if (profile) {
-                    slotsContainer.innerHTML += `<div class="slot-card"><h3>Слот ${i + 1} (${profile.mode})</h3><div class="slot-stats">⭐ Рівень: ${profile.level}<br>🪙 Монети: ${profile.coins}<br>🐟 В садку: ${profile.fish.length} шт.</div><div class="slot-btn-group"><button class="ui-btn btn-play" onclick="playProfile(${i})">▶ Грати</button><button class="ui-btn btn-delete" onclick="deleteProfile(${i})" title="Видалити">🗑️</button></div></div>`;
+                    slotsContainer.innerHTML += `<div class="slot-card"><h3>Слот ${i + 1} (${escapeHTML(profile.mode)})</h3><div class="slot-stats">⭐ Рівень: ${escapeHTML(String(profile.level))}<br>🪙 Монети: ${escapeHTML(String(profile.coins))}<br>🐟 В садку: ${profile.fish.length} шт.</div><div class="slot-btn-group"><button class="ui-btn btn-play" onclick="playProfile(${i})">▶ Грати</button><button class="ui-btn btn-delete" onclick="deleteProfile(${i})" title="Видалити">🗑️</button></div></div>`;
                 } else {
                     slotsContainer.innerHTML += `<div class="slot-card" style="justify-content: center;"><h3 style="color:#aaa; border-color:#aaa;">Слот ${i + 1}</h3><div class="slot-empty">Вільний слот</div><button class="ui-btn btn-create" onclick="openCreateModal(${i})">➕ Створити</button></div>`;
                 }
@@ -271,13 +291,16 @@ const TEST_IMAGE = "images/fish/plotva.png";
             gameScreen.style.display = 'none'; mainMenu.style.display = 'flex';
             
             let seaBtn = document.getElementById('btn-sea');
-            if (playerLevel < 10) { seaBtn.disabled = true; seaBtn.innerHTML = "🔒 Чорне море (з 10 рівня)"; } else { seaBtn.disabled = false; seaBtn.innerHTML = "Чорне море"; }
+            if (playerLevel < LOCATION_UNLOCK_LEVELS.sea) { seaBtn.disabled = true; seaBtn.innerHTML = `🔒 Чорне море (з ${LOCATION_UNLOCK_LEVELS.sea} рівня)`; } else { seaBtn.disabled = false; seaBtn.innerHTML = "Чорне море"; }
 
             let yamaBtn = document.getElementById('btn-yama');
-            if (playerLevel < 20) { yamaBtn.disabled = true; yamaBtn.innerHTML = "🔒 Річка Яма (з 20 рівня)"; } else { yamaBtn.disabled = false; yamaBtn.innerHTML = "Річка Яма"; }
+            if (playerLevel < LOCATION_UNLOCK_LEVELS.yama) { yamaBtn.disabled = true; yamaBtn.innerHTML = `🔒 Річка Яма (з ${LOCATION_UNLOCK_LEVELS.yama} рівня)`; } else { yamaBtn.disabled = false; yamaBtn.innerHTML = "Річка Яма"; }
             
             let amazonBtn = document.getElementById('btn-amazon');
-            if (playerLevel < 25) { amazonBtn.disabled = true; amazonBtn.innerHTML = "🔒 Дельта Амазонки (з 25 рівня)"; } else { amazonBtn.disabled = false; amazonBtn.innerHTML = "Дельта Амазонки"; }
+            if (playerLevel < LOCATION_UNLOCK_LEVELS.amazon) { amazonBtn.disabled = true; amazonBtn.innerHTML = `🔒 Дельта Амазонки (з ${LOCATION_UNLOCK_LEVELS.amazon} рівня)`; } else { amazonBtn.disabled = false; amazonBtn.innerHTML = "Дельта Амазонки"; }
+
+            let akhtubаBtn = document.getElementById('btn-akhtuba');
+            if (playerLevel < LOCATION_UNLOCK_LEVELS.akhtuba) { akhtubаBtn.disabled = true; akhtubаBtn.innerHTML = `🔒 Річка Ахтуба (з ${LOCATION_UNLOCK_LEVELS.akhtuba} рівня)`; } else { akhtubаBtn.disabled = false; akhtubаBtn.innerHTML = "Річка Ахтуба"; }
             
             clearInterval(clockInterval);
             clearInterval(spinnerInterval);
@@ -289,9 +312,10 @@ const TEST_IMAGE = "images/fish/plotva.png";
             playerExp += amount;
             while (playerExp >= expNeeded) {
                 playerExp -= expNeeded; playerLevel++; expNeeded = calculateExpNeeded(playerLevel);
-                if (playerLevel === 10) alert("🎉 ВІТАЄМО! Відкрито локацію: Чорне море!");
-                if (playerLevel === 20) alert("🎉 ВІТАЄМО! Відкрито легендарну локацію: Річка Яма!");
-                if (playerLevel === 25) alert("🎉 ВІТАЄМО! Відкрито екзотичну локацію: Дельта Амазонки!");
+                if (playerLevel === LOCATION_UNLOCK_LEVELS.sea) alert("🎉 ВІТАЄМО! Відкрито локацію: Чорне море!");
+                if (playerLevel === LOCATION_UNLOCK_LEVELS.yama) alert("🎉 ВІТАЄМО! Відкрито легендарну локацію: Річка Яма!");
+                if (playerLevel === LOCATION_UNLOCK_LEVELS.amazon) alert("🎉 ВІТАЄМО! Відкрито екзотичну локацію: Дельта Амазонки!");
+                if (playerLevel === LOCATION_UNLOCK_LEVELS.akhtuba) alert("🎉 ВІТАЄМО! Відкрито легендарну локацію: Річка Ахтуба!");
             }
             updateLevelUI(); saveProgress();
         }
@@ -348,11 +372,13 @@ const TEST_IMAGE = "images/fish/plotva.png";
 
             baitDisplay.innerHTML = `Наживка: ${icon} ${dispName} <span style="color:${color}">(${qty})</span>`;
             
-            document.getElementById('menu-qty-bread').innerText = `(${baitInventory.bread} шт)`; document.getElementById('menu-qty-bread').className = baitInventory.bread > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
-            document.getElementById('menu-qty-worm').innerText = `(${baitInventory.worm} шт)`; document.getElementById('menu-qty-worm').className = baitInventory.worm > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
-            document.getElementById('menu-qty-lure_1').innerText = `(${baitInventory.lure_1} шт)`; document.getElementById('menu-qty-lure_1').className = baitInventory.lure_1 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
-            document.getElementById('menu-qty-lure_2').innerText = `(${baitInventory.lure_2} шт)`; document.getElementById('menu-qty-lure_2').className = baitInventory.lure_2 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
-            document.getElementById('menu-qty-lure_3').innerText = `(${baitInventory.lure_3} шт)`; document.getElementById('menu-qty-lure_3').className = baitInventory.lure_3 > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            ['bread', 'worm', 'lure_1', 'lure_2', 'lure_3'].forEach(id => {
+                const el = document.getElementById(`menu-qty-${id}`);
+                if (!el) return;
+                const qty = baitInventory[id] ?? 0;
+                el.innerText = `(${qty} шт)`;
+                el.className = qty > 0 ? 'bait-qty' : 'bait-qty out-of-stock';
+            });
 
             // Оновлюємо динамічний список живців
             let dynamicContainer = document.getElementById('dynamic-live-baits');
@@ -374,15 +400,19 @@ const TEST_IMAGE = "images/fish/plotva.png";
         
         function updateKeepnetUI() { document.getElementById('fish-count').innerText = caughtFishArray.length; document.getElementById('total-weight').innerText = totalWeight.toFixed(2); document.getElementById('max-weight').innerText = keepnetData[currentKeepnetLevel].capacity; }
 
-        function toggleInventory() {
-            if (inventoryModal.style.display === 'flex') { closeAllModals(); return; }
-            closeAllModals();
+        function renderInventoryList() {
             inventoryList.innerHTML = caughtFishArray.length === 0 ? '<p style="text-align:center;">Садок порожній...</p>' : '';
             caughtFishArray.forEach((fish, index) => {
                 let fClass = getFishClass(fish.name);
                 let imgTag = fish.image ? `<img src="${fish.image}" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 5px;">` : '';
                 inventoryList.innerHTML += `<div class="list-item"><span>${index + 1}. ${imgTag}<span class="${fClass}">${fish.name}</span></span><span class="${fClass}">${fish.weight} кг</span></div>`;
             });
+        }
+
+        function toggleInventory() {
+            if (inventoryModal.style.display === 'flex') { closeAllModals(); return; }
+            closeAllModals();
+            renderInventoryList();
             inventoryModal.style.display = 'flex';
         }
 
@@ -414,14 +444,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
                 updateKeepnetUI();
                 updateBaitUI();
                 saveProgress();
-                
-                // Перемальовуємо садок
-                inventoryList.innerHTML = caughtFishArray.length === 0 ? '<p style="text-align:center;">Садок порожній...</p>' : '';
-                caughtFishArray.forEach((fish, index) => {
-                    let fClass = getFishClass(fish.name);
-                    let imgTag = fish.image ? `<img src="${fish.image}" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 5px;">` : '';
-                    inventoryList.innerHTML += `<div class="list-item"><span>${index + 1}. ${imgTag}<span class="${fClass}">${fish.name}</span></span><span class="${fClass}">${fish.weight} кг</span></div>`;
-                });
+                renderInventoryList();
                 
                 let msg = `Успіх! Ви переробили ${craftedCount} дрібних рибин на живця:\n`;
                 for(let k in craftedTypes) {
@@ -439,7 +462,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
             if (encyclopediaModal.style.display === 'flex') { closeAllModals(); return; }
             closeAllModals();
             
-            const titles = { dnipro: "Річка Дніпро", sea: "Чорне море", yama: "Річка Яма", amazon: "Дельта Амазонки" };
+            const titles = { dnipro: "Річка Дніпро", sea: "Чорне море", yama: "Річка Яма", amazon: "Дельта Амазонки", akhtuba: "Річка Ахтуба" };
             encyclopediaTitle.innerText = `Риби: ${titles[currentLocation]}`;
             
             encyclopediaList.innerHTML = '';
@@ -467,7 +490,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
         
         function toggleMarket() { if (gameState !== 'idle') { showMessage("Ви не можете піти на ринок під час риболовлі!"); return; } if (marketModal.style.display === 'flex') { closeAllModals(); return; } closeAllModals(); updateCoinsUI(); updateMarketUI(); marketKeepnetValUI.innerText = calculateKeepnetValue(); document.getElementById('btn-sell-all').disabled = caughtFishArray.length === 0; marketModal.style.display = 'flex'; }
 
-        function calculateKeepnetValue() { let value = 0; caughtFishArray.forEach(fish => { let dbFish = fishDatabase[currentLocation].find(f => f.name === fish.name); let diff = dbFish ? dbFish.difficulty : 1; value += fish.weight * diff * 10; }); return Math.floor(value); }
+        function calculateKeepnetValue() { let value = 0; caughtFishArray.forEach(fish => { value += fish.weight * (fish.difficulty || 1) * 10; }); return Math.floor(value); }
         function sellAllFish() { let value = calculateKeepnetValue(); if(value > 0) { coins += value; caughtFishArray = []; totalWeight = 0; updateKeepnetUI(); updateCoinsUI(); toggleMarket(); showMessage(`Улов продано за 🪙 ${value} монет!`); saveProgress(); } }
 
         function buyBait(type, amount, cost) { 
@@ -488,7 +511,7 @@ const TEST_IMAGE = "images/fish/plotva.png";
             } 
         }
         
-        function buyUpgrade(type, cost) {
+        function buyUpgrade(type) {
             if (type === 'keepnet') {
                 let nextLevel = currentKeepnetLevel + 1; if (nextLevel >= keepnetData.length) return;
                 let actualCost = keepnetData[nextLevel].cost;

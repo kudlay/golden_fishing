@@ -28,6 +28,9 @@
         .loc-amazon .sky { background: linear-gradient(to bottom, #ff7e5f, #feb47b); }
         .loc-amazon .water { background: linear-gradient(to bottom, #5c6e58, #3b4d37); }
 
+        .loc-akhtuba .sky { background: linear-gradient(to bottom, #74b9ff, #dfe6e9); }
+        .loc-akhtuba .water { background: linear-gradient(to bottom, #2980b9, #6ab0a8, #a8d8b3); }
+
         /* Анімація хвиль */
         @keyframes waves {
             0% { transform: translateX(0) translateY(0); }
